@@ -4,4 +4,6 @@ Criando class cujo atributos são:
 	Canal Atual
 	Lista De Canais
 	Volume
-criar métodos para aumentar/diminuir volume, trocar e sintonizar um novo canal, adicionando um novo canal à lista (somente se esse canal não estiver nessa lista). No atributo lista de canais, devem estar armazenados todos os canais já sintonizados dessa TV.
+criar métodos para aumentar/diminuir volume, trocar e sintonizar um novo canal, 
+adicionando um novo canal à lista (somente se esse canal não estiver nessa lista). 
+No atributo lista de canais, devem estar armazenados todos os canais já sintonizados dessa TV.
