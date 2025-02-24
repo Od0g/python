@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Análise de O.S.</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+      }
+      h1,
+      h2 {
+        color: #333;
+      }
+      img {
+        max-width: 100%;
+        height: auto;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Análise de Ordens de Serviço (O.S.)</h1>
+
+    <h2>Número de O.S. por Ano de Fabricação</h2>
+    <img
+      src="{{ url_for('static', filename='os_por_ano.png') }}"
+      alt="O.S. por Ano"
+    />
+
+    <h2>Número de O.S. por Máquina</h2>
+    <img
+      src="{{ url_for('static', filename='os_por_maquina.png') }}"
+      alt="O.S. por Máquina"
+    />
+
+    <h2>Máquina com mais O.S.</h2>
+    <p>
+      A máquina <strong>{{ maquina_mais_os }}</strong> tem o maior número de
+      O.S.: <strong>{{ quantidade_mais_os }}</strong>.
+    </p>
+  </body>
+</html>
