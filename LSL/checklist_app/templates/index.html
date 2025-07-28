@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Checklist de Treinamento</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Checklists de Treinamento Existentes</h1>
+        <a href="{{ url_for('criar_checklist') }}" class="button">Criar Novo Checklist</a>
+        <a href="{{ url_for('historico') }}" class="button">Ver Histórico</a>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <ul class="flashes">
+                    {% for category, message in messages %}
+                        <li class="{{ category }}">{{ message }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        {% endwith %}
+
+        {% if checklists %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Data</th>
+                        <th>Treinador</th> <th>Carga Horária</th> <th>Processo</th> <th>Avaliador</th>
+                        <th>Setor</th>
+                        <th>Turno</th>
+                        <th>Status</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for checklist in checklists %}
+                        <tr>
+                            <td>{{ checklist.id }}</td>
+                            <td>{{ checklist.data_preenchimento.strftime('%d/%m/%Y') }}</td>
+                            <td>{{ checklist.treinador }}</td> <td>{{ checklist.carga_horaria or 'N/A' }}</td> <td>{{ checklist.processo_treinamento or 'N/A' }}</td> <td>{{ checklist.avaliador }}</td>
+                            <td>{{ checklist.setor }}</td>
+                            <td>{{ checklist.turno }}</td>
+                            <td>{{ checklist.status }}</td>
+                            <td>
+                                {% if checklist.status == 'Pendente' %}
+                                    <a href="{{ url_for('preencher_checklist', checklist_id=checklist.id) }}" class="button small">Preencher</a>
+                                {% else %}
+                                    <a href="{{ url_for('gerar_pdf', checklist_id=checklist.id) }}" class="button small">Gerar PDF</a>
+                                    <a href="{{ url_for('gerar_excel', checklist_id=checklist.id) }}" class="button small">Gerar Excel</a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>Nenhum checklist encontrado.</p>
+        {% endif %}
+    </div>
+</body>
+</html>
