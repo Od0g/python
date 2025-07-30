@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Preencher Checklist de Treinamento</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        .signature-area {
+            border: 1px solid #ccc;
+            background-color: #f9f9f9;
+            margin-bottom: 20px;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .signature-area canvas {
+            border: 1px solid #ddd;
+            background-color: #fff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Preencher Checklist de Treinamento #{{ checklist.id }}</h1>
+        <p><strong>Data:</strong> {{ checklist.data_preenchimento.strftime('%d/%m/%Y') }}</p>
+        <p><strong>Treinador:</strong> {{ checklist.treinador }}</p>
+        <p><strong>Carga Horária:</strong> {{ checklist.carga_horaria or 'N/A' }}</p>
+        <p><strong>Processo:</strong> {{ checklist.processo_treinamento or 'N/A' }}</p>
+        <p><strong>Avaliador:</strong> {{ checklist.avaliador }}</p>
+        <p><strong>Setor:</strong> {{ checklist.setor }}</p>
+        <p><strong>Turno:</strong> {{ checklist.turno }}</p>
+
+        <form method="POST" action="{{ url_for('preencher_checklist', checklist_id=checklist.id) }}">
+            {% for item in checklist.itens %}
+                <div class="checklist-item">
+                    <label>{{ item.item_nome }}:</label>
+                    <select name="item_{{ item.id }}_valor">
+                        <option value="">Selecione</option>
+                        <option value="Conforme" {% if item.valor_preenchido == 'Conforme' %}selected{% endif %}>Conforme</option>
+                        <option value="Não Conforme" {% if item.valor_preenchido == 'Não Conforme' %}selected{% endif %}>Não Conforme</option>
+                        <option value="N/A" {% if item.valor_preenchido == 'N/A' %}selected{% endif %}>N/A</option>
+                    </select>
+                    <textarea name="item_{{ item.id }}_obs" placeholder="Observações">{{ item.observacoes or '' }}</textarea>
+                </div>
+            {% endfor %}
+
+            <hr>
+
+            <div class="signature-area">
+                <h3>Assinatura do Funcionário</h3>
+                <canvas id="signatureFuncionarioCanvas" width="400" height="150"></canvas>
+                <button type="button" id="clearFuncionarioSignature" class="button secondary small">Limpar Assinatura</button>
+                <br><br>
+                <label for="nome_funcionario_assinatura">Nome do Funcionário:</label>
+                <input type="text" id="nome_funcionario_assinatura" name="nome_funcionario_assinatura" required>
+                <input type="hidden" id="assinatura_funcionario_data" name="assinatura_funcionario_data">
+            </div>
+
+            <hr>
+
+            <div class="signature-area">
+                <h3>Assinatura do Gestor</h3>
+                <canvas id="signatureGestorCanvas" width="400" height="150"></canvas>
+                <button type="button" id="clearGestorSignature" class="button secondary small">Limpar Assinatura</button>
+                <br><br>
+                <label for="nome_gestor_assinatura">Nome do Gestor:</label>
+                <input type="text" id="nome_gestor_assinatura" name="nome_gestor_assinatura" required>
+                <input type="hidden" id="assinatura_gestor_data" name="assinatura_gestor_data">
+            </div>
+
+            <button type="submit" class="button">Salvar e Assinar</button>
+            <a href="{{ url_for('index') }}" class="button secondary">Cancelar</a>
+        </form>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.2/dist/signature_pad.umd.min.js"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
