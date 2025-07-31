@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Selecionar Modelo de Checklist</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Selecione um Modelo para Preencher</h1>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <ul class="flashes">
+                    {% for category, message in messages %}
+                        <li class="{{ category }}">{{ message }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        {% endwith %}
+
+        {% if modelos %}
+            <ul class="modelos-lista">
+                {% for modelo in modelos %}
+                    <li>
+                        <h3>{{ modelo.name }} (Setor: {{ modelo.sector }})</h3>
+                        <p>{{ modelo.description or 'Sem descrição.' }}</p>
+                        <a href="{{ url_for('editar_checklist', modelo_id=modelo.id) }}" class="button">Preencher</a>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>Nenhum modelo de checklist ativo encontrado. Por favor, <a href="{{ url_for('cadastrar_modelo') }}">cadastre um novo modelo</a>.</p>
+        {% endif %}
+    </div>
+
+    <style>
+        .modelos-lista {
+            list-style: none;
+            padding: 0;
+        }
+        .modelos-lista li {
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 10px;
+        }
+        .modelos-lista h3 {
+            margin-top: 0;
+            color: #007bff;
+        }
+    </style>
+</body>
+</html>

@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Preencher Checklist de Treinamento</title>
+    <title>Preencher Checklist</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.2/dist/signature_pad.umd.min.js"></script>
     <style>
         .signature-area {
             border: 1px solid #ccc;
@@ -22,58 +23,132 @@
 <body>
     <div class="container">
         <h1>Preencher Checklist de Treinamento #{{ checklist.id }}</h1>
-        <p><strong>Data:</strong> {{ checklist.data_preenchimento.strftime('%d/%m/%Y') }}</p>
-        <p><strong>Treinador:</strong> {{ checklist.treinador }}</p>
-        <p><strong>Carga Horária:</strong> {{ checklist.carga_horaria or 'N/A' }}</p>
-        <p><strong>Processo:</strong> {{ checklist.processo_treinamento or 'N/A' }}</p>
-        <p><strong>Avaliador:</strong> {{ checklist.avaliador }}</p>
-        <p><strong>Setor:</strong> {{ checklist.setor }}</p>
-        <p><strong>Turno:</strong> {{ checklist.turno }}</p>
+        <h3>Modelo: {{ checklist.template.name }}</h3>
 
-        <form method="POST" action="{{ url_for('preencher_checklist', checklist_id=checklist.id) }}">
-            {% for item in checklist.itens %}
-                <div class="checklist-item">
-                    <label>{{ item.item_nome }}:</label>
-                    <select name="item_{{ item.id }}_valor">
-                        <option value="">Selecione</option>
-                        <option value="Conforme" {% if item.valor_preenchido == 'Conforme' %}selected{% endif %}>Conforme</option>
-                        <option value="Não Conforme" {% if item.valor_preenchido == 'Não Conforme' %}selected{% endif %}>Não Conforme</option>
-                        <option value="N/A" {% if item.valor_preenchido == 'N/A' %}selected{% endif %}>N/A</option>
-                    </select>
-                    <textarea name="item_{{ item.id }}_obs" placeholder="Observações">{{ item.observacoes or '' }}</textarea>
+        <form method="POST">
+            <label for="evaluated_employee_name">Nome do Colaborador:</label>
+            <input type="text" id="evaluated_employee_name" name="evaluated_employee_name" value="{{ checklist.evaluated_employee_name }}" required>
+
+            <label for="employee_matricula">Matrícula:</label>
+            <input type="text" id="employee_matricula" name="employee_matricula" value="{{ checklist.employee_matricula }}" required>
+
+            <label for="employee_position">Cargo:</label>
+            <input type="text" id="employee_position" name="employee_position" value="{{ checklist.employee_position }}" required>
+            
+            <label for="shift">Turno:</label>
+            <input type="text" id="shift" name="shift" value="{{ checklist.shift }}" required>
+
+            <label for="area">Área:</label>
+            <input type="text" id="area" name="area" value="{{ checklist.area }}" required>
+
+            <label for="training_date">Data de Treinamento:</label>
+            <input type="date" id="training_date" name="training_date" value="{{ checklist.training_date.strftime('%Y-%m-%d') }}" required>
+
+            <label for="training_coach">Treinador:</label>
+            <input type="text" id="training_coach" name="training_coach" value="{{ checklist.training_coach }}" required>
+            
+            <label for="training_load_hours">Carga Horária:</label>
+            <input type="text" id="training_load_hours" name="training_load_hours" value="{{ checklist.training_load_hours }}">
+            
+            <label for="training_process_desc">Processo de Treinamento:</label>
+            <textarea id="training_process_desc" name="training_process_desc">{{ checklist.training_process_desc }}</textarea>
+
+            <hr>
+            <h3>Itens do Checklist</h3>
+            {% for answer in checklist.answers %}
+            <div class="checklist-item">
+                <p><strong>{{ answer.item_template.question_text }}</strong></p>
+                <div class="resposta-opcoes">
+                    <label>
+                        <input type="radio" name="answer_{{ answer.id }}" value="Sim" {% if answer.answer == 'Sim' %}checked{% endif %}> Sim
+                    </label>
+                    <label>
+                        <input type="radio" name="answer_{{ answer.id }}" value="Não" {% if answer.answer == 'Não' %}checked{% endif %}> Não
+                    </label>
+                    <label>
+                        <input type="radio" name="answer_{{ answer.id }}" value="Parcial" {% if answer.answer == 'Parcial' %}checked{% endif %}> Parcial
+                    </label>
+                    <label>
+                        <input type="radio" name="answer_{{ answer.id }}" value="NSP" {% if answer.answer == 'NSP' %}checked{% endif %}> NSP
+                    </label>
                 </div>
+                {% if answer.item_template.requires_comment_if_no %}
+                <textarea name="comment_{{ answer.id }}" placeholder="Comentário obrigatório se a resposta for 'Não'" {% if answer.answer == 'Não' %}required{% endif %}>{{ answer.comment or '' }}</textarea>
+                {% else %}
+                <textarea name="comment_{{ answer.id }}" placeholder="Comentário (opcional)">{{ answer.comment or '' }}</textarea>
+                {% endif %}
+            </div>
             {% endfor %}
 
             <hr>
-
             <div class="signature-area">
-                <h3>Assinatura do Funcionário</h3>
-                <canvas id="signatureFuncionarioCanvas" width="400" height="150"></canvas>
-                <button type="button" id="clearFuncionarioSignature" class="button secondary small">Limpar Assinatura</button>
+                <h3>Assinatura do Avaliador</h3>
+                <canvas id="signatureAvaliadorCanvas" width="400" height="150"></canvas>
+                <button type="button" id="clearAvaliadorSignature" class="button secondary small">Limpar Assinatura</button>
                 <br><br>
-                <label for="nome_funcionario_assinatura">Nome do Funcionário:</label>
-                <input type="text" id="nome_funcionario_assinatura" name="nome_funcionario_assinatura" required>
-                <input type="hidden" id="assinatura_funcionario_data" name="assinatura_funcionario_data">
+                <label for="avaliador_nome">Nome do Avaliador:</label>
+                <input type="text" id="avaliador_nome" name="avaliador_nome" value="{{ current_user.username }}" readonly>
+                <input type="hidden" id="assinatura_avaliador_data" name="assinatura_avaliador_data">
             </div>
 
-            <hr>
-
-            <div class="signature-area">
-                <h3>Assinatura do Gestor</h3>
-                <canvas id="signatureGestorCanvas" width="400" height="150"></canvas>
-                <button type="button" id="clearGestorSignature" class="button secondary small">Limpar Assinatura</button>
-                <br><br>
-                <label for="nome_gestor_assinatura">Nome do Gestor:</label>
-                <input type="text" id="nome_gestor_assinatura" name="nome_gestor_assinatura" required>
-                <input type="hidden" id="assinatura_gestor_data" name="assinatura_gestor_data">
-            </div>
-
-            <button type="submit" class="button">Salvar e Assinar</button>
+            <button type="submit" class="button">Finalizar e Salvar</button>
             <a href="{{ url_for('index') }}" class="button secondary">Cancelar</a>
         </form>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.2/dist/signature_pad.umd.min.js"></script>
-    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const canvasAvaliador = document.getElementById('signatureAvaliadorCanvas');
+            const signaturePadAvaliador = new SignaturePad(canvasAvaliador);
+            const clearButtonAvaliador = document.getElementById('clearAvaliadorSignature');
+            const signatureDataInputAvaliador = document.getElementById('assinatura_avaliador_data');
+            const form = document.querySelector('form');
+
+            function resizeCanvas() {
+                const ratio = Math.max(window.devicePixelRatio || 1, 1);
+                canvasAvaliador.width = canvasAvaliador.offsetWidth * ratio;
+                canvasAvaliador.height = canvasAvaliador.offsetHeight * ratio;
+                canvasAvaliador.getContext("2d").scale(ratio, ratio);
+                signaturePadAvaliador.clear();
+            }
+
+            window.addEventListener('resize', resizeCanvas);
+            resizeCanvas();
+
+            clearButtonAvaliador.addEventListener('click', function(event) {
+                event.preventDefault();
+                signaturePadAvaliador.clear();
+            });
+
+            form.addEventListener('submit', function(event) {
+                if (!signaturePadAvaliador.isEmpty()) {
+                    signatureDataInputAvaliador.value = signaturePadAvaliador.toDataURL();
+                } else {
+                    alert('Por favor, assine antes de finalizar o checklist.');
+                    event.preventDefault();
+                }
+
+                // Lógica para comentário obrigatório
+                const radioButtons = document.querySelectorAll('input[type="radio"][value="Não"]');
+                let hasError = false;
+                radioButtons.forEach(radio => {
+                    const requiresComment = radio.closest('.checklist-item').querySelector('textarea').hasAttribute('required');
+                    if (radio.checked && requiresComment) {
+                        const commentField = radio.closest('.checklist-item').querySelector('textarea');
+                        if (commentField.value.trim() === '') {
+                            alert('A resposta "Não" exige um comentário obrigatório.');
+                            commentField.focus();
+                            event.preventDefault();
+                            hasError = true;
+                        }
+                    }
+                });
+
+                if (hasError) {
+                    event.preventDefault();
+                }
+            });
+        });
+    </script>
 </body>
 </html>

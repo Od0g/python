@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastrar Modelo de Checklist</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            let perguntaCounter = 0;
+            const itensContainer = document.getElementById('itens-container');
+            const addPerguntaBtn = document.getElementById('add-pergunta-btn');
+
+            function addPerguntaField(perguntaTexto = '') {
+                perguntaCounter++;
+                const newDiv = document.createElement('div');
+                newDiv.className = 'pergunta-item';
+                newDiv.innerHTML = `
+                    <label>Pergunta ${perguntaCounter}:</label>
+                    <input type="text" name="pergunta[]" value="${perguntaTexto}" required>
+                    <label class="checkbox-label">
+                        <input type="checkbox" name="comentario_obrigatorio[]"> Comentário obrigatório se "Não"
+                    </label>
+                `;
+                itensContainer.appendChild(newDiv);
+            }
+
+            addPerguntaBtn.addEventListener('click', function(event) {
+                event.preventDefault();
+                addPerguntaField();
+            });
+
+            // Adiciona um campo de pergunta inicial
+            addPerguntaField();
+        });
+    </script>
+    <style>
+        .pergunta-item {
+            margin-bottom: 15px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+        .pergunta-item input[type="text"] {
+            width: calc(100% - 20px);
+            margin-bottom: 5px;
+        }
+        .checkbox-label {
+            display: inline-block;
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Cadastrar Novo Modelo de Checklist</h1>
+        <form method="POST" action="{{ url_for('cadastrar_modelo') }}">
+            <label for="nome">Nome do Modelo:</label>
+            <input type="text" id="nome" name="nome" required>
+
+            <label for="descricao">Descrição:</label>
+            <textarea id="descricao" name="descricao"></textarea>
+
+            <label for="setor">Setor de Uso:</label>
+            <input type="text" id="setor" name="setor" required>
+
+            <hr>
+            <h3>Itens do Checklist</h3>
+            <div id="itens-container">
+                </div>
+            <button id="add-pergunta-btn" class="button secondary">Adicionar Pergunta</button>
+
+            <hr>
+            <button type="submit" class="button">Salvar Modelo</button>
+            <a href="{{ url_for('index') }}" class="button secondary">Cancelar</a>
+        </form>
+    </div>
+</body>
+</html>

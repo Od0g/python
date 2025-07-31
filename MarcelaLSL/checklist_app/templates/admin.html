@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel de Administração</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Painel de Administração</h1>
+            <a href="{{ url_for('index') }}" class="button secondary">Voltar ao Painel Principal</a>
+        </header>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <ul class="flashes">
+                    {% for category, message in messages %}
+                        <li class="{{ category }}">{{ message }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        {% endwith %}
+
+        <hr>
+
+        <h2>Gestão de Modelos de Checklist</h2>
+        <a href="{{ url_for('cadastrar_modelo') }}" class="button">Cadastrar Novo Modelo</a>
+        <a href="{{ url_for('gerenciar_modelos') }}" class="button">Gerenciar Modelos Existentes</a>
+
+        <hr>
+
+        <h2>Gestão de Usuários</h2>
+        <a href="{{ url_for('gerenciar_usuarios') }}" class="button">Gerenciar Usuários</a>
+
+    </div>
+</body>
+</html>

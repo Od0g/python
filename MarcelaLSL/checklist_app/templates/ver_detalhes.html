@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalhes do Checklist #{{ checklist.id }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Detalhes do Checklist #{{ checklist.id }}</h1>
+            <a href="{{ url_for('index') }}" class="button secondary">Voltar ao Painel</a>
+            <a href="{{ url_for('gerar_pdf', checklist_id=checklist.id) }}" class="button">Gerar PDF</a>
+            <a href="{{ url_for('gerar_excel', checklist_id=checklist.id) }}" class="button">Gerar Excel</a>
+        </header>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <ul class="flashes">
+                    {% for category, message in messages %}
+                        <li class="{{ category }}">{{ message }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        {% endwith %}
+        
+        <hr>
+
+        <h2>Informações do Checklist</h2>
+        <p><strong>Status:</strong> {{ checklist.current_status }}</p>
+        <p><strong>Modelo:</strong> {{ checklist.template.name }}</p>
+        <p><strong>Avaliador:</strong> {{ checklist.evaluator.username }}</p>
+        <p><strong>Colaborador Avaliado:</strong> {{ checklist.evaluated_employee_name }}</p>
+        <p><strong>Data de Preenchimento:</strong> {{ checklist.created_at.strftime('%d/%m/%Y %H:%M') }}</p>
+        <hr>
+
+        <h2>Respostas do Checklist</h2>
+        {% for answer in checklist.answers %}
+            <div class="checklist-item">
+                <p><strong>{{ answer.item_template.question_text }}</strong></p>
+                <p>Resposta: {{ answer.answer }}</p>
+                <p>Comentário: {{ answer.comment or 'N/A' }}</p>
+            </div>
+        {% endfor %}
+
+        <hr>
+
+        <h2>Assinatura do Avaliador</h2>
+        {% if checklist.evaluator_signature_data %}
+            <img src="data:image/png;base64,{{ checklist.evaluator_signature_data | b64encode }}" alt="Assinatura do Avaliador" class="assinatura-img">
+            <p><strong>Nome:</strong> {{ checklist.evaluator_signature_name }}</p>
+            <p><strong>Data:</strong> {{ checklist.evaluator_signature_datetime.strftime('%d/%m/%Y %H:%M') }}</p>
+        {% else %}
+            <p>Assinatura não encontrada.</p>
+        {% endif %}
+
+        <hr>
+
+        <h2>Histórico de Validações</h2>
+        {% if checklist.validation_logs %}
+            {% for log in checklist.validation_logs %}
+                <div class="validation-log-item">
+                    <p><strong>Validado por:</strong> {{ log.validator.username }} ({{ log.validator.role_obj.name }})</p>
+                    <p><strong>Status:</strong> {{ log.validation_status }}</p>
+                    <p><strong>Comentário:</strong> {{ log.comment or 'N/A' }}</p>
+                    {% if log.signature_data %}
+                        <img src="data:image/png;base64,{{ log.signature_data | b64encode }}" alt="Assinatura de Validação" class="assinatura-img">
+                    {% endif %}
+                    <p><strong>Data:</strong> {{ log.validation_datetime.strftime('%d/%m/%Y %H:%M') }}</p>
+                </div>
+            {% endfor %}
+        {% else %}
+            <p>Nenhuma validação registrada.</p>
+        {% endif %}
+    </div>
+</body>
+</html>

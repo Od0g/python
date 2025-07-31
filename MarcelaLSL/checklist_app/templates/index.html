@@ -3,14 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema de Checklist de Treinamento</title>
+    <title>Painel de Controle</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
     <div class="container">
-        <h1>Checklists de Treinamento Existentes</h1>
-        <a href="{{ url_for('criar_checklist') }}" class="button">Criar Novo Checklist</a>
-        <a href="{{ url_for('historico') }}" class="button">Ver Histórico</a>
+        <header>
+            <h1>Bem-vindo, {{ current_user.username }}!</h1>
+            <a href="{{ url_for('logout') }}" class="button secondary">Sair</a>
+        </header>
 
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
@@ -22,15 +23,30 @@
             {% endif %}
         {% endwith %}
 
+        <hr>
+
+        <h2>Gestão de Checklists</h2>
+        <a href="{{ url_for('selecionar_modelo') }}" class="button">Criar Novo Checklist</a>
+        <a href="{{ url_for('historico') }}" class="button">Ver Histórico</a>
+
+        <hr>
+
+        {% if current_user.role_obj.name == 'Administrador' %}
+            <h2>Administração</h2>
+            
+            <a href="{{ url_for('cadastrar_modelo') }}" class="button">Cadastrar Novo Modelo</a>
+            {% endif %}
+
+        <hr>
+
+        <h3>Checklists Recentes</h3>
         {% if checklists %}
             <table>
                 <thead>
                     <tr>
                         <th>ID</th>
-                        <th>Data</th>
-                        <th>Treinador</th> <th>Carga Horária</th> <th>Processo</th> <th>Avaliador</th>
-                        <th>Setor</th>
-                        <th>Turno</th>
+                        <th>Modelo</th>
+                        <th>Avaliador</th>
                         <th>Status</th>
                         <th>Ações</th>
                     </tr>
@@ -39,17 +55,18 @@
                     {% for checklist in checklists %}
                         <tr>
                             <td>{{ checklist.id }}</td>
-                            <td>{{ checklist.data_preenchimento.strftime('%d/%m/%Y') }}</td>
-                            <td>{{ checklist.treinador }}</td> <td>{{ checklist.carga_horaria or 'N/A' }}</td> <td>{{ checklist.processo_treinamento or 'N/A' }}</td> <td>{{ checklist.avaliador }}</td>
-                            <td>{{ checklist.setor }}</td>
-                            <td>{{ checklist.turno }}</td>
-                            <td>{{ checklist.status }}</td>
+                            <td>{{ checklist.template.name }}</td>
+                            <td>{{ checklist.evaluator.username }}</td>
+                            <td>{{ checklist.current_status }}</td>
                             <td>
-                                {% if checklist.status == 'Pendente' %}
-                                    <a href="{{ url_for('preencher_checklist', checklist_id=checklist.id) }}" class="button small">Preencher</a>
+                                {% if checklist.current_status == 'Em Andamento' and checklist.evaluator_user_id == current_user.id %}
+                                    <a href="{{ url_for('editar_checklist', checklist_id=checklist.id) }}" class="button small">Continuar Preenchimento</a>
+                                {% elif checklist.current_status == 'Aguardando Validação' and current_user.role_obj.name != 'Avaliador' %}
+                                    <a href="{{ url_for('validar_checklist', checklist_id=checklist.id) }}" class="button small">Validar</a>
                                 {% else %}
-                                    <a href="{{ url_for('gerar_pdf', checklist_id=checklist.id) }}" class="button small">Gerar PDF</a>
-                                    <a href="{{ url_for('gerar_excel', checklist_id=checklist.id) }}" class="button small">Gerar Excel</a>
+                                    <a href="{{ url_for('ver_detalhes', checklist_id=checklist.id) }}" class="button small">Ver Detalhes</a>
+                                    <a href="{{ url_for('gerar_pdf', checklist_id=checklist.id) }}" class="button small">PDF</a>
+                                    <a href="{{ url_for('gerar_excel', checklist_id=checklist.id) }}" class="button small">Excel</a>
                                 {% endif %}
                             </td>
                         </tr>

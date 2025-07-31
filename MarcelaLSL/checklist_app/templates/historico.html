@@ -3,14 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema de Checklist de Treinamento</title>
+    <title>Histórico de Checklists</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
     <div class="container">
-        <h1>Checklists de Treinamento Existentes</h1>
-        <a href="{{ url_for('criar_checklist') }}" class="button">Criar Novo Checklist</a>
-        <a href="{{ url_for('historico') }}" class="button">Ver Histórico</a>
+        <header>
+            <h1>Histórico de Checklists</h1>
+            <a href="{{ url_for('index') }}" class="button secondary">Voltar ao Início</a>
+        </header>
 
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
@@ -21,16 +22,18 @@
                 </ul>
             {% endif %}
         {% endwith %}
+        
+        <hr>
 
         {% if checklists %}
             <table>
                 <thead>
                     <tr>
                         <th>ID</th>
+                        <th>Modelo</th>
+                        <th>Avaliador</th>
+                        <th>Colaborador</th>
                         <th>Data</th>
-                        <th>Treinador</th> <th>Carga Horária</th> <th>Processo</th> <th>Avaliador</th>
-                        <th>Setor</th>
-                        <th>Turno</th>
                         <th>Status</th>
                         <th>Ações</th>
                     </tr>
@@ -39,25 +42,22 @@
                     {% for checklist in checklists %}
                         <tr>
                             <td>{{ checklist.id }}</td>
-                            <td>{{ checklist.data_preenchimento.strftime('%d/%m/%Y') }}</td>
-                            <td>{{ checklist.treinador }}</td> <td>{{ checklist.carga_horaria or 'N/A' }}</td> <td>{{ checklist.processo_treinamento or 'N/A' }}</td> <td>{{ checklist.avaliador }}</td>
-                            <td>{{ checklist.setor }}</td>
-                            <td>{{ checklist.turno }}</td>
-                            <td>{{ checklist.status }}</td>
+                            <td>{{ checklist.template.name }}</td>
+                            <td>{{ checklist.evaluator.username }}</td>
+                            <td>{{ checklist.evaluated_employee_name }}</td>
+                            <td>{{ checklist.created_at.strftime('%d/%m/%Y') }}</td>
+                            <td>{{ checklist.current_status }}</td>
                             <td>
-                                {% if checklist.status == 'Pendente' %}
-                                    <a href="{{ url_for('preencher_checklist', checklist_id=checklist.id) }}" class="button small">Preencher</a>
-                                {% else %}
-                                    <a href="{{ url_for('gerar_pdf', checklist_id=checklist.id) }}" class="button small">Gerar PDF</a>
-                                    <a href="{{ url_for('gerar_excel', checklist_id=checklist.id) }}" class="button small">Gerar Excel</a>
-                                {% endif %}
+                                <a href="#" class="button small">Ver Detalhes</a>
+                                <a href="{{ url_for('gerar_pdf', checklist_id=checklist.id) }}" class="button small">PDF</a>
+                                <a href="{{ url_for('gerar_excel', checklist_id=checklist.id) }}" class="button small">Excel</a>
                             </td>
                         </tr>
                     {% endfor %}
                 </tbody>
             </table>
         {% else %}
-            <p>Nenhum checklist encontrado.</p>
+            <p>Nenhum checklist no histórico.</p>
         {% endif %}
     </div>
 </body>

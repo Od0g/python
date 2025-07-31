@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Validar Checklist</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Validar Checklist</h1>
+            <a href="{{ url_for('index') }}" class="button secondary">Voltar ao Início</a>
+        </header>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <ul class="flashes">
+                    {% for category, message in messages %}
+                        <li class="{{ category }}">{{ message }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        {% endwith %}
+
+        <hr>
+
+        <div class="checklist-display">
+            <h2>Dados do Checklist #{{ checklist.id }}</h2>
+            <p><strong>Modelo:</strong> {{ checklist.template.name }}</p>
+            <p><strong>Avaliador:</strong> {{ checklist.evaluator.username }}</p>
+            <p><strong>Colaborador Avaliado:</strong> {{ checklist.evaluated_employee_name }}</p>
+            <p><strong>Status:</strong> {{ checklist.current_status }}</p>
+            <p><strong>Data de Criação:</strong> {{ checklist.created_at.strftime('%d/%m/%Y %H:%M') }}</p>
+            
+            <h3>Itens do Checklist</h3>
+            <div class="checklist-items">
+                {% for answer in checklist.answers %}
+                    <div class="checklist-item">
+                        <p><strong>Pergunta {{ answer.item_template.question_number }}:</strong> {{ answer.item_template.question_text }}</p>
+                        <p><strong>Resposta:</strong> {{ answer.answer }}</p>
+                        <p><strong>Comentário:</strong> {{ answer.comment or 'N/A' }}</p>
+                    </div>
+                {% endfor %}
+            </div>
+
+            <div class="assinatura-area">
+                <h3>Assinatura do Avaliador</h3>
+                {% if checklist.evaluator_signature_data %}
+                    <img src="data:image/png;base64,{{ checklist.evaluator_signature_data | b64encode }}" alt="Assinatura do Avaliador" class="assinatura-img">
+                    <p><strong>Nome:</strong> {{ checklist.evaluator_signature_name }}</p>
+                    <p><strong>Data:</strong> {{ checklist.evaluator_signature_datetime.strftime('%d/%m/%Y %H:%M') }}</p>
+                {% else %}
+                    <p>Assinatura não encontrada.</p>
+                {% endif %}
+            </div>
+
+            {% if checklist.validation_logs %}
+                <h3>Validações Anteriores</h3>
+                {% for log in checklist.validation_logs %}
+                    <div class="validation-log">
+                        <p><strong>Validador:</strong> {{ log.validator_user.username }} ({{ log.validator_user.role_obj.name }})</p>
+                        <p><strong>Status:</strong> {{ log.validation_status }}</p>
+                        <p><strong>Comentário:</strong> {{ log.comment or 'N/A' }}</p>
+                        {% if log.signature_data %}
+                            <img src="data:image/png;base64,{{ log.signature_data | b64encode }}" alt="Assinatura de Validação" class="assinatura-img">
+                        {% endif %}
+                        <p><strong>Data:</strong> {{ log.validated_at.strftime('%d/%m/%Y %H:%M') }}</p>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        </div>
+
+        <hr>
+
+        <h2>Sua Validação</h2>
+        <form method="POST">
+            <div class="form-group">
+                <label for="comentario_validador">Comentário:</label>
+                <textarea id="comentario_validador" name="comentario_validador" rows="4"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label>Assinatura:</label>
+                <div class="assinatura-pad-container">
+                    <canvas id="signature-pad" class="signature-pad" width="400" height="200"></canvas>
+                </div>
+                <button type="button" id="clear-signature">Limpar Assinatura</button>
+            </div>
+            
+            <input type="hidden" name="assinatura_validador_data" id="assinatura_validador_data">
+            <button type="submit" class="button primary" id="submit-button">Validar Checklist</button>
+        </form>
+    </div>
+
+    <script>
+        var canvas = document.getElementById('signature-pad');
+        var signaturePad = new SignaturePad(canvas);
+
+        document.getElementById('clear-signature').addEventListener('click', function () {
+            signaturePad.clear();
+        });
+
+        document.querySelector('form').addEventListener('submit', function (e) {
+            if (signaturePad.isEmpty()) {
+                alert("Por favor, adicione sua assinatura antes de validar.");
+                e.preventDefault();
+            } else {
+                var dataUrl = signaturePad.toDataURL();
+                document.getElementById('assinatura_validador_data').value = dataUrl;
+            }
+        });
+    </script>
+</body>
+</html>
