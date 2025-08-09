@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Histórico de Checklists</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Histórico de Checklists</h1>
+            <a href="{{ url_for('index') }}" class="button secondary">Voltar ao Início</a>
+        </header>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <ul class="flashes">
+                    {% for category, message in messages %}
+                        <li class="{{ category }}">{{ message }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        {% endwith %}
+        
+        <hr>
+
+        {% if checklists %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Modelo</th>
+                        <th>Avaliador</th>
+                        <th>Colaborador</th>
+                        <th>Data</th>
+                        <th>Status</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for checklist in checklists %}
+                        <tr>
+                            <td>{{ checklist.id }}</td>
+                            <td>{{ checklist.template.name }}</td>
+                            <td>{{ checklist.evaluator.username }}</td>
+                            <td>{{ checklist.evaluated_employee_name }}</td>
+                            <td>{{ checklist.created_at.strftime('%d/%m/%Y') }}</td>
+                            <td>{{ checklist.current_status }}</td>
+                            <td>
+                                <a href="#" class="button small">Ver Detalhes</a>
+                                <a href="{{ url_for('gerar_pdf', checklist_id=checklist.id) }}" class="button small">PDF</a>
+                                <a href="{{ url_for('gerar_excel', checklist_id=checklist.id) }}" class="button small">Excel</a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>Nenhum checklist no histórico.</p>
+        {% endif %}
+    </div>
+</body>
+</html>

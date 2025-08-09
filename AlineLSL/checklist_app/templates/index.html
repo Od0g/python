@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel de Controle</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Bem-vindo, {{ current_user.username }}!</h1>
+            <a href="{{ url_for('logout') }}" class="button secondary">Sair</a>
+        </header>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <ul class="flashes">
+                    {% for category, message in messages %}
+                        <li class="{{ category }}">{{ message }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        {% endwith %}
+
+        <hr>
+        
+        <h2>Gestão de Checklists</h2>
+        <a href="{{ url_for('selecionar_modelo') }}" class="button">Criar Novo Checklist</a>
+        <a href="{{ url_for('historico') }}" class="button">Ver Histórico</a>
+
+        <hr>
+
+        {% if current_user.role_obj.name == 'Administrador' %}
+            <h2>Administração</h2>
+            <a href="{{ url_for('admin_panel') }}" class="button">Painel de Administração</a>
+        {% endif %}
+        
+        <hr>
+
+        <h3>Checklists Recentes</h3>
+        {% if checklists %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Modelo</th>
+                        <th>Avaliador</th>
+                        <th>Status</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for checklist in checklists %}
+                        <tr>
+                            <td>{{ checklist.id }}</td>
+                            <td>{{ checklist.template.name }}</td>
+                            <td>{{ checklist.evaluator.username }}</td>
+                            <td>{{ checklist.current_status }}</td>
+                            <td>
+                                {% if checklist.current_status == 'Em Andamento' and checklist.evaluator_id == current_user.id %}
+                                    <a href="{{ url_for('preencher_checklist', instance_id=checklist.id) }}" class="button small">Preencher</a>
+                                {% elif checklist.current_status == 'Concluído' %}
+                                    <a href="{{ url_for('validar_checklist', instance_id=checklist.id) }}" class="button small">Validar</a>
+                                {% else %}
+                                    <a href="{{ url_for('ver_detalhes', instance_id=checklist.id) }}" class="button small">Ver Detalhes</a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>Nenhum checklist encontrado.</p>
+        {% endif %}
+    </div>
+</body>
+</html>

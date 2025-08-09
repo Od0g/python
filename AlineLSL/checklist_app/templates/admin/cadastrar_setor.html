@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastrar Setor</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Cadastrar Setor</h1>
+        
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <ul class="flashes">
+                    {% for category, message in messages %}
+                        <li class="{{ category }}">{{ message }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        {% endwith %}
+
+        <form method="POST">
+            <label for="nome_setor">Nome do Setor:</label>
+            <input type="text" id="nome_setor" name="nome_setor" required>
+            <button type="submit" class="button">Salvar Setor</button>
+        </form>
+
+        <hr>
+
+        <h2>Setores Cadastrados</h2>
+        {% if setores %}
+            <ul>
+                {% for setor in setores %}
+                <li>{{ setor.name }}</li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>Nenhum setor cadastrado ainda.</p>
+        {% endif %}
+
+        <a href="{{ url_for('admin_panel') }}" class="button secondary">Voltar para o Painel</a>
+    </div>
+</body>
+</html>

@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastrar Modelo de Checklist</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const checklistTypeSelect = document.getElementById('checklist_type');
+            const itensContainer = document.getElementById('itens-container');
+            const addPerguntaBtn = document.getElementById('add-pergunta-btn');
+
+            function addPerguntaField(perguntaTexto = '', isScoreItem = false, scoreBlock = '') {
+                const newDiv = document.createElement('div');
+                newDiv.className = 'pergunta-item';
+                
+                const questionCount = itensContainer.querySelectorAll('.pergunta-item').length + 1;
+                let htmlContent = `
+                    <label>Pergunta ${questionCount}:</label>
+                    <input type="text" name="pergunta[]" value="${perguntaTexto}" required>
+                `;
+
+                if (isScoreItem) {
+                    htmlContent += `
+                        <label>Bloco Avaliativo:</label>
+                        <select name="score_block[]" required>
+                            <option value="Seguranca" ${scoreBlock === 'Seguranca' ? 'selected' : ''}>Segurança</option>
+                            <option value="Qualidade" ${scoreBlock === 'Qualidade' ? 'selected' : ''}>Qualidade</option>
+                            <option value="Produtividade" ${scoreBlock === 'Produtividade' ? 'selected' : ''}>Produtividade</option>
+                            <option value="Comportamento" ${scoreBlock === 'Comportamento' ? 'selected' : ''}>Comportamento</option>
+                        </select>
+                    `;
+                } else {
+                    htmlContent += `
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="comentario_obrigatorio[]" ${!isScoreItem ? 'checked' : ''}> Comentário obrigatório se "Não"
+                        </label>
+                        <input type="hidden" name="score_block[]" value="">
+                    `;
+                }
+
+                newDiv.innerHTML = htmlContent;
+                itensContainer.appendChild(newDiv);
+            }
+
+            // Garante que o tipo de checklist padrão é 'diario' se não houver um selecionado
+            checklistTypeSelect.value = checklistTypeSelect.value || 'diario';
+
+            function updateFormForType() {
+                const isDiario = checklistTypeSelect.value === 'diario';
+                itensContainer.innerHTML = '';
+                addPerguntaBtn.style.display = 'block';
+
+                if (isDiario) {
+                    // Adiciona um campo de pergunta inicial para o checklist diário
+                    addPerguntaField();
+                } else {
+                    // Adiciona 4 campos de nota para o checklist semanal
+                    const blocks = ['Seguranca', 'Qualidade', 'Produtividade', 'Comportamento'];
+                    blocks.forEach(block => addPerguntaField(block, true, block));
+                    addPerguntaBtn.style.display = 'none'; // Desabilita o botão para o semanal
+                }
+            }
+
+            addPerguntaBtn.addEventListener('click', function(event) {
+                event.preventDefault();
+                addPerguntaField(checklistTypeSelect.value === 'semanal');
+            });
+            
+            checklistTypeSelect.addEventListener('change', updateFormForType);
+
+            updateFormForType();
+        });
+    </script>
+    <style>
+        .pergunta-item {
+            margin-bottom: 15px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+        .pergunta-item input[type="text"], .pergunta-item select {
+            width: calc(100% - 20px);
+            margin-bottom: 5px;
+        }
+        .checkbox-label {
+            display: inline-block;
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Cadastrar Novo Modelo de Checklist</h1>
+        <form method="POST" action="{{ url_for('cadastrar_modelo') }}">
+            <label for="nome">Nome do Modelo:</label>
+            <input type="text" id="nome" name="nome" required>
+
+            <label for="checklist_type">Tipo de Checklist:</label>
+            <select id="checklist_type" name="checklist_type" required>
+                <option value="diario">Checklist Diário (Dia 1 a 30)</option>
+                <option value="semanal">Checklist Semanal</option>
+            </select>
+
+            <hr>
+            <h3>Itens do Checklist</h3>
+            <div id="itens-container">
+                </div>
+            <button id="add-pergunta-btn" class="button secondary">Adicionar Pergunta</button>
+
+            <hr>
+            <button type="submit" class="button">Salvar Modelo</button>
+            <a href="{{ url_for('admin_panel') }}" class="button secondary">Cancelar</a>
+        </form>
+    </div>
+</body>
+</html>

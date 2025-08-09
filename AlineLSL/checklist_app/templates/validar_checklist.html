@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Validar Checklist #{{ checklist.id }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.2/dist/signature_pad.umd.min.js"></script>
+    <style>
+        .assinatura-img {
+            max-width: 250px;
+            height: auto;
+            border: 1px solid #ccc;
+            background-color: #f9f9f9;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Validar Checklist #{{ checklist.checklist_number }}</h1>
+        <p><strong>Colaborador:</strong> {{ checklist.employee.name }}</p>
+        <p><strong>Status:</strong> {{ checklist.status }}</p>
+
+        <hr>
+        <h2>Detalhes do Preenchimento</h2>
+        {% for pergunta in perguntas %}
+            {% set resposta = respostas.get(pergunta.id) %}
+            <div class="checklist-item">
+                <p><strong>{{ loop.index }}. {{ pergunta.question_text }}</strong></p>
+                <p>Resposta: {{ resposta.answer if resposta else 'N/A' }}</p>
+                <p>Comentário: {{ resposta.comment if resposta else 'N/A' }}</p>
+            </div>
+        {% endfor %}
+
+        <hr>
+
+        <h2>Assinaturas dos Responsáveis</h2>
+        <h3>Assinatura do Líder</h3>
+        {% if checklist.signature_leader_data %}
+            <img src="data:image/png;base64,{{ checklist.signature_leader_data | b64encode }}" class="assinatura-img">
+        {% else %}
+            <p>Assinatura não encontrada.</p>
+        {% endif %}
+
+        <h3>Assinatura do Avaliador</h3>
+        {% if checklist.signature_evaluator_data %}
+            <img src="data:image/png;base64,{{ checklist.signature_evaluator_data | b64encode }}" class="assinatura-img">
+        {% else %}
+            <p>Assinatura não encontrada.</p>
+        {% endif %}
+
+        <h3>Assinatura do Colaborador</h3>
+        {% if checklist.signature_employee_data %}
+            <img src="data:image/png;base64,{{ checklist.signature_employee_data | b64encode }}" class="assinatura-img">
+        {% else %}
+            <p>Assinatura não encontrada.</p>
+        {% endif %}
+
+        <hr>
+
+        <form method="POST" action="{{ url_for('validar_checklist', instance_id=checklist.id) }}">
+            <h3>Validação do Coordenador</h3>
+            <label for="status_final">Status Final:</label>
+            <select id="status_final" name="status_final" required>
+                <option value="Aprovado">Aprovado</option>
+                <option value="Reprovado">Reprovado</option>
+            </select>
+            
+            <label for="comentario_coordenador">Justificativa:</label>
+            <textarea id="comentario_coordenador" name="comentario_coordenador"></textarea>
+
+            <div class="signature-area">
+                <h4>Assinatura do Coordenador:</h4>
+                <canvas id="signature-coordenador-canvas" width="400" height="150" class="signature-canvas"></canvas>
+                <button type="button" class="button secondary small clear-signature-btn">Limpar</button>
+                <input type="hidden" name="assinatura_coordenador_data" class="signature-data-input">
+            </div>
+
+            <button type="submit" class="button">Finalizar Validação</button>
+        </form>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

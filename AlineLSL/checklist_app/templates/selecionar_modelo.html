@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Criar Novo Checklist</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Criar Novo Checklist</h1>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <ul class="flashes">
+                    {% for category, message in messages %}
+                        <li class="{{ category }}">{{ message }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        {% endwith %}
+
+        <form method="POST" action="{{ url_for('iniciar_preenchimento') }}">
+            <label for="modelo_id">Selecione o Modelo:</label>
+            <select id="modelo_id" name="modelo_id" required>
+                {% if modelos %}
+                    {% for modelo in modelos %}
+                        <option value="{{ modelo.id }}">{{ modelo.name }} ({{ modelo.checklist_type }})</option>
+                    {% endfor %}
+                {% else %}
+                    <option value="" disabled selected>Nenhum modelo cadastrado</option>
+                {% endif %}
+            </select>
+            
+            <hr>
+            <h3>Informações do Checklist</h3>
+            
+            <label for="colaborador_id">Colaborador Avaliado:</label>
+            <select id="colaborador_id" name="colaborador_id" required>
+                {% if colaboradores %}
+                    {% for colab in colaboradores %}
+                        <option value="{{ colab.id }}">{{ colab.name }} (Matrícula: {{ colab.matricula }})</option>
+                    {% endfor %}
+                {% else %}
+                    <option value="" disabled selected>Nenhum colaborador cadastrado</option>
+                {% endif %}
+            </select>
+
+            <label for="leader_id">Líder:</label>
+            <select id="leader_id" name="leader_id" required>
+                {% if lideres %}
+                    {% for lider in lideres %}
+                        <option value="{{ lider.id }}">{{ lider.username }}</option>
+                    {% endfor %}
+                {% else %}
+                    <option value="" disabled selected>Nenhum líder cadastrado</option>
+                {% endif %}
+            </select>
+
+            <label for="evaluator_id">Avaliador:</label>
+            <select id="evaluator_id" name="evaluator_id" required>
+                {% if avaliadores %}
+                    {% for avaliador in avaliadores %}
+                        <option value="{{ avaliador.id }}">{{ avaliador.username }}</option>
+                    {% endfor %}
+                {% else %}
+                    <option value="" disabled selected>Nenhum avaliador cadastrado</option>
+                {% endif %}
+            </select>
+            
+            <button type="submit" class="button">Iniciar Preenchimento</button>
+        </form>
+
+        <a href="{{ url_for('index') }}" class="button secondary">Voltar</a>
+    </div>
+</body>
+</html>

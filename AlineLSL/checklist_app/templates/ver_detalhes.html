@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalhes do Checklist #{{ checklist.id }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        .assinatura-img {
+            max-width: 250px;
+            height: auto;
+            border: 1px solid #ccc;
+            background-color: #f9f9f9;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Detalhes do Checklist #{{ checklist.id }}</h1>
+            <a href="{{ url_for('gerar_pdf', instance_id=checklist.id) }}" class="button">Gerar PDF</a>
+            <a href="{{ url_for('gerar_excel', instance_id=checklist.id) }}" class="button">Gerar Excel</a>
+            <a href="{{ url_for('enviar_email', instance_id=checklist.id) }}" class="button">Enviar por E-mail</a>
+        </header>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <ul class="flashes">
+                    {% for category, message in messages %}
+                        <li class="{{ category }}">{{ message }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        {% endwith %}
+
+        <hr>
+
+        <h2>Informações do Checklist</h2>
+        <p><strong>Status:</strong> {{ checklist.status }}</p>
+        <p><strong>Modelo:</strong> {{ checklist.template.name }}</p>
+        <p><strong>Líder:</strong> {{ checklist.leader.username }}</p>
+        <p><strong>Avaliador:</strong> {{ checklist.evaluator.username }}</p>
+        <p><strong>Colaborador Avaliado:</strong> {{ checklist.employee.name }}</p>
+        <p><strong>Data de Preenchimento:</strong> {{ checklist.fill_date.strftime('%d/%m/%Y') }}</p>
+
+        <hr>
+
+        <h2>Respostas do Checklist</h2>
+        {% for answer in checklist.answers %}
+            <div class="checklist-item">
+                <p><strong>{{ loop.index }}. {{ answer.item_template.question_text }}</strong></p>
+                <p>Resposta: {{ answer.answer }}</p>
+                <p>Comentário: {{ answer.comment or 'N/A' }}</p>
+            </div>
+        {% endfor %}
+
+        <hr>
+
+        <h2>Assinaturas</h2>
+
+        <div class="assinaturas-container">
+            <h3>Assinatura do Líder</h3>
+            {% if checklist.signature_leader_data %}
+                <img src="data:image/png;base64,{{ checklist.signature_leader_data | b64encode }}" alt="Assinatura do Líder" class="assinatura-img">
+            {% else %}
+                <p>Assinatura não encontrada.</p>
+            {% endif %}
+
+            <h3>Assinatura do Avaliador</h3>
+            {% if checklist.signature_evaluator_data %}
+                <img src="data:image/png;base64,{{ checklist.signature_evaluator_data | b64encode }}" alt="Assinatura do Avaliador" class="assinatura-img">
+            {% else %}
+                <p>Assinatura não encontrada.</p>
+            {% endif %}
+
+            <h3>Assinatura do Colaborador</h3>
+            {% if checklist.signature_employee_data %}
+                <img src="data:image/png;base64,{{ checklist.signature_employee_data | b64encode }}" alt="Assinatura do Colaborador" class="assinatura-img">
+            {% else %}
+                <p>Assinatura não encontrada.</p>
+            {% endif %}
+        </div>
+        
+        <hr>
+        <a href="{{ url_for('index') }}" class="button secondary">Voltar para o Painel</a>
+    </div>
+</body>
+</html>

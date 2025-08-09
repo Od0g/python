@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerenciar Modelos de Checklist</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Gerenciar Modelos de Checklist</h1>
+            <a href="{{ url_for('admin_panel') }}" class="button secondary">Voltar ao Painel Admin</a>
+        </header>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <ul class="flashes">
+                    {% for category, message in messages %}
+                        <li class="{{ category }}">{{ message }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        {% endwith %}
+
+        <hr>
+
+        {% if modelos %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nome</th>
+                        <th>Setor</th>
+                        <th>Status</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for modelo in modelos %}
+                        <tr>
+                            <td>{{ modelo.id }}</td>
+                            <td>{{ modelo.name }}</td>
+                            <td>{{ modelo.sector }}</td>
+                            <td>{{ "Ativo" if modelo.is_active else "Inativo" }}</td>
+                            <td>
+                                {% if modelo.is_active %}
+                                    <a href="{{ url_for('toggle_modelo', modelo_id=modelo.id) }}" class="button small danger">Desativar</a>
+                                {% else %}
+                                    <a href="{{ url_for('toggle_modelo', modelo_id=modelo.id) }}" class="button small">Ativar</a>
+                                {% endif %}
+                                </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>Nenhum modelo de checklist encontrado.</p>
+        {% endif %}
+    </div>
+</body>
+</html>

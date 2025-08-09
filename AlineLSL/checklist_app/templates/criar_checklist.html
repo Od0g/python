@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Criar Checklist de Treinamento</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Criar Novo Checklist de Treinamento</h1>
+        <form method="POST" action="{{ url_for('criar_checklist') }}">
+            <label for="avaliador">Avaliador:</label>
+            <input type="text" id="avaliador" name="avaliador" required>
+
+            <label for="setor">Setor:</label>
+            <input type="text" id="setor" name="setor" required>
+
+            <label for="turno">Turno:</label>
+            <input type="text" id="turno" name="turno" required>
+
+            <hr> <label for="treinador">Treinador:</label>
+            <input type="text" id="treinador" name="treinador" required>
+
+            <label for="carga_horaria">Carga Horária de Treinamento (ex: "8 horas", "4h"):</label>
+            <input type="text" id="carga_horaria" name="carga_horaria">
+
+            <label for="processo_treinamento">Processo/Tópico de Treinamento:</label>
+            <textarea id="processo_treinamento" name="processo_treinamento" rows="3"></textarea>
+
+            <button type="submit" class="button">Criar Checklist</button>
+            <a href="{{ url_for('index') }}" class="button secondary">Cancelar</a>
+        </form>
+    </div>
+</body>
+</html>

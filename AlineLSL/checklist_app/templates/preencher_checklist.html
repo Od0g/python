@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Preencher Checklist</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.2/dist/signature_pad.umd.min.js"></script>
+    <style>
+        .signature-area {
+            border: 1px solid #ccc;
+            background-color: #f9f9f9;
+            margin-bottom: 20px;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .signature-canvas {
+            border: 1px solid #ddd;
+            background-color: #fff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Preencher Checklist #{{ checklist.checklist_number }}</h1>
+        <p><strong>Modelo:</strong> {{ checklist.template.name }}</p>
+        <p><strong>Colaborador:</strong> {{ checklist.employee.name }}</p>
+        <p><strong>Líder:</strong> {{ checklist.leader.username }}</p>
+        <p><strong>Avaliador:</strong> {{ checklist.evaluator.username }}</p>
+        <p><strong>Data de Preenchimento:</strong> {{ checklist.fill_date.strftime('%d/%m/%Y') }}</p>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <ul class="flashes">
+                    {% for category, message in messages %}
+                        <li class="{{ category }}">{{ message }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        {% endwith %}
+
+        <form method="POST" action="{{ url_for('preencher_checklist', instance_id=checklist.id) }}">
+            <hr>
+            <h3>Perguntas</h3>
+            {% for pergunta in perguntas %}
+                {% set resposta_existente = respostas.get(pergunta.id) %}
+                <div class="checklist-item">
+                    <p><strong>{{ loop.index }}. {{ pergunta.question_text }}</strong></p>
+                    <div>
+                        <input type="radio" id="sim_{{ pergunta.id }}" name="resposta_{{ pergunta.id }}" value="Sim" {% if resposta_existente and resposta_existente.answer == 'Sim' %}checked{% endif %}>
+                        <label for="sim_{{ pergunta.id }}">Sim</label>
+                        
+                        <input type="radio" id="nao_{{ pergunta.id }}" name="resposta_{{ pergunta.id }}" value="Não" {% if resposta_existente and resposta_existente.answer == 'Não' %}checked{% endif %}>
+                        <label for="nao_{{ pergunta.id }}">Não</label>
+                        
+                        <input type="radio" id="parcial_{{ pergunta.id }}" name="resposta_{{ pergunta.id }}" value="Parcial" {% if resposta_existente and resposta_existente.answer == 'Parcial' %}checked{% endif %}>
+                        <label for="parcial_{{ pergunta.id }}">Parcial</label>
+
+                        <input type="radio" id="nsp_{{ pergunta.id }}" name="resposta_{{ pergunta.id }}" value="NSP" {% if resposta_existente and resposta_existente.answer == 'NSP' %}checked{% endif %}>
+                        <label for="nsp_{{ pergunta.id }}">NSP</label>
+                    </div>
+                    <textarea name="comentario_{{ pergunta.id }}" placeholder="Comentários...">{{ resposta_existente.comment if resposta_existente else '' }}</textarea>
+                </div>
+            {% endfor %}
+            <hr>
+            
+            <h3>Assinaturas</h3>
+            <div class="signature-area">
+                <h4>Assinatura do Líder:</h4>
+                <canvas id="signature-leader-canvas" width="400" height="150" class="signature-canvas"></canvas>
+                <button type="button" class="button secondary small clear-signature-btn">Limpar</button>
+                <input type="hidden" name="assinatura_lider_data" class="signature-data-input">
+            </div>
+            
+            <div class="signature-area">
+                <h4>Assinatura do Avaliador:</h4>
+                <canvas id="signature-avaliador-canvas" width="400" height="150" class="signature-canvas"></canvas>
+                <button type="button" class="button secondary small clear-signature-btn">Limpar</button>
+                <input type="hidden" name="assinatura_avaliador_data" class="signature-data-input">
+            </div>
+            
+            <div class="signature-area">
+                <h4>Assinatura do Colaborador:</h4>
+                <canvas id="signature-colaborador-canvas" width="400" height="150" class="signature-canvas"></canvas>
+                <button type="button" class="button secondary small clear-signature-btn">Limpar</button>
+                <input type="hidden" name="assinatura_colaborador_data" class="signature-data-input">
+            </div>
+            
+            <button type="submit" class="button">Finalizar Checklist</button>
+        </form>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
