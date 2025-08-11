@@ -1,0 +1,35 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Cadastro{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2>Cadastrar Novo Usuário</h2>
+    <form method="POST" action="{{ url_for('auth.register') }}">
+        <div class="form-group">
+            <label for="nome">Nome Completo</label>
+            <input type="text" class="form-control" id="nome" name="nome" required>
+        </div>
+        <div class="form-group">
+            <label for="login">Login</label>
+            <input type="text" class="form-control" id="login" name="login" required>
+        </div>
+        <div class="form-group">
+            <label for="senha">Senha</label>
+            <input type="password" class="form-control" id="senha" name="senha" required>
+        </div>
+        <div class="form-group">
+            <label for="perfil">Perfil</label>
+            <select class="form-control" id="perfil" name="perfil">
+                <option value="administrador">Administrador</option>
+                <option value="coordenador">Coordenador</option>
+                <option value="lider">Líder</option>
+                <option value="avaliador">Avaliador</option>
+                <option value="colaborador">Colaborador</option>
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary">Cadastrar</button>
+    </form>
+    <small class="text-muted">Já tem uma conta? <a href="{{ url_for('auth.login') }}">Faça login aqui</a>.</small>
+</div>
+{% endblock %}

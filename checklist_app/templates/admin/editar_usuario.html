@@ -1,0 +1,31 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Editar Usuário{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2>Editar Usuário: {{ usuario.nome }}</h2>
+    <form method="POST" action="{{ url_for('admin.editar_usuario', usuario_id=usuario.id) }}">
+        <div class="form-group">
+            <label for="nome">Nome Completo</label>
+            <input type="text" class="form-control" id="nome" name="nome" value="{{ usuario.nome }}" required>
+        </div>
+        <div class="form-group">
+            <label for="login">Login</label>
+            <input type="text" class="form-control" id="login" name="login" value="{{ usuario.login }}" required>
+        </div>
+        <div class="form-group">
+            <label for="perfil">Perfil</label>
+            <select class="form-control" id="perfil" name="perfil">
+                <option value="administrador" {% if usuario.perfil == 'administrador' %}selected{% endif %}>Administrador</option>
+                <option value="coordenador" {% if usuario.perfil == 'coordenador' %}selected{% endif %}>Coordenador</option>
+                <option value="lider" {% if usuario.perfil == 'lider' %}selected{% endif %}>Líder</option>
+                <option value="avaliador" {% if usuario.perfil == 'avaliador' %}selected{% endif %}>Avaliador</option>
+                <option value="colaborador" {% if usuario.perfil == 'colaborador' %}selected{% endif %}>Colaborador</option>
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary mt-3">Salvar Alterações</button>
+        <a href="{{ url_for('admin.gerenciar_usuarios') }}" class="btn btn-secondary mt-3">Cancelar</a>
+    </form>
+</div>
+{% endblock %}

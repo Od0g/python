@@ -1,0 +1,36 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Histórico de Checklists{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2>Histórico de Checklists</h2>
+    <hr>
+    <h4>Colaborador: {{ colaborador.nome }}</h4>
+    
+    {% if respostas %}
+        {% for resposta in respostas %}
+            <div class="card mb-3">
+                <div class="card-header">
+                    Checklist de {{ resposta.data_preenchimento.strftime('%d/%m/%Y') }} - {{ resposta.modelo.tipo.capitalize() }}
+                </div>
+                <div class="card-body">
+                    <p><strong>Respostas:</strong></p>
+                    <ul>
+                        {% for item, valor in json.loads(resposta.respostas).items() %}
+                            <li>{{ item }}: {{ valor }}</li>
+                        {% endfor %}
+                    </ul>
+                    <p><strong>Observações:</strong> {{ resposta.observacoes }}</p>
+                    {% if resposta.assinaturas %}
+                    <p><strong>Assinatura:</strong></p>
+                    <img src="{{ json.loads(resposta.assinaturas)[0] }}" alt="Assinatura Digital" style="border: 1px solid #ced4da; max-width: 100%; height: auto;">
+                    {% endif %}
+                </div>
+            </div>
+        {% endfor %}
+    {% else %}
+        <div class="alert alert-info">Nenhum checklist preenchido para este colaborador.</div>
+    {% endif %}
+</div>
+{% endblock %}

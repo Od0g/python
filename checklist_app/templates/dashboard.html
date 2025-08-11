@@ -1,0 +1,141 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2>Dashboard</h2>
+    <hr>
+
+    {% if checklists_nao_preenchidos %}
+    <div class="alert alert-danger">
+        <h4 class="alert-heading">Atenção: Checklists não preenchidos hoje!</h4>
+        <p>Os seguintes colaboradores não preencheram o checklist diário de hoje:</p>
+        <ul>
+        {% for col in checklists_nao_preenchidos %}
+            <li>{{ col.nome }} ({{ col.setor.nome }})</li>
+        {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+
+    <h3>Resumo Rápido</h3>
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card text-white bg-warning mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Colaboradores em Risco</h5>
+                    <p class="card-text h1">{{ total_em_risco }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-5">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    Percentual de Conclusão dos 30 Dias
+                </div>
+                <div class="card-body">
+                    <canvas id="conclusaoChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    Pontuação Média Semanal
+                </div>
+                <div class="card-body">
+                    <canvas id="pontuacaoChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if colaboradores_em_risco %}
+    <h3 class="mt-5 text-danger">Atenção: Colaboradores com Checklists Reprovados</h3>
+    <table class="table table-striped table-bordered">
+        <thead>
+            <tr>
+                <th scope="col">Nome</th>
+                <th scope="col">Setor</th>
+                <th scope="col">Líder</th>
+                <th scope="col">Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for colaborador in colaboradores_em_risco %}
+            <tr>
+                <td>{{ colaborador.nome }}</td>
+                <td>{{ colaborador.setor.nome }}</td>
+                <td>{{ colaborador.lider.nome }}</td>
+                <td>
+                    <a href="{{ url_for('checklists.historico_checklist', colaborador_id=colaborador.id) }}" class="btn btn-sm btn-danger">Ver Histórico</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+
+    <h3 class="mt-5">Colaboradores em Acompanhamento</h3>
+    <table class="table table-striped">
+        <!-- Add content for Colaboradores em Acompanhamento if needed -->
+    </table>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<script>
+    // Gráfico de Conclusão
+    var ctxConclusao = document.getElementById('conclusaoChart').getContext('2d');
+    var conclusaoChart = new Chart(ctxConclusao, {
+        type: 'doughnut',
+        data: {
+            labels: ['Concluído', 'Pendente'],
+            datasets: [{
+                data: [{{ percentual_conclusao }}, {{ percentual_pendente }}],
+                backgroundColor: ['#28a745', '#dc3545'],
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'top',
+                },
+                title: {
+                    display: true,
+                    text: 'Progresso Geral'
+                }
+            }
+        }
+    });
+
+    // Gráfico de Pontuação Semanal
+    var ctxPontuacao = document.getElementById('pontuacaoChart').getContext('2d');
+    var pontuacaoChart = new Chart(ctxPontuacao, {
+        type: 'bar',
+        data: {
+            labels: JSON.parse('{{ labels_pontuacoes | tojson | safe }}'),
+            datasets: [{
+                label: 'Pontuação Média',
+                data: JSON.parse('{{ data_pontuacoes | tojson | safe }}'),
+                backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 12
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}

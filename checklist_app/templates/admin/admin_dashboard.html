@@ -1,0 +1,24 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Dashboard Admin{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2>Dashboard de Administração</h2>
+    <hr>
+    <div class="list-group">
+        <a href="{{ url_for('admin.cadastrar_colaborador') }}" class="list-group-item list-group-item-action">
+            Cadastrar Novo Colaborador
+        </a>
+        <a href="{{ url_for('admin.cadastrar_setor') }}" class="list-group-item list-group-item-action">
+            Cadastrar Novo Setor
+        </a>
+        <a href="{{ url_for('admin.cadastrar_modelo') }}" class="list-group-item list-group-item-action">
+            Cadastrar Modelo de Checklist
+        </a>
+        <a href="{{ url_for('admin.gerar_relatorios') }}" class="list-group-item list-group-item-action">
+            Gerar Relatórios e Exportar Dados
+        </a>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,118 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Preencher Checklist {{ tipo.capitalize() }}{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2>Preencher Checklist {{ tipo.capitalize() }}</h2>
+    <hr>
+    <h4>Colaborador: {{ colaborador.nome }} | Setor: {{ colaborador.setor.nome }}</h4>
+    <form id="checklistForm" method="POST" action="{{ url_for('checklists.preencher_checklist', colaborador_id=colaborador.id, tipo=tipo) }}">
+        
+        {% if tipo == 'diario' %}
+            <p><strong>Dia:</strong> {{ colaborador.data_inicio.day }} de 30 | <strong>Data:</strong> {{ 'now'|date('d/m/Y') }}</p>
+            {% for item in itens %}
+                <div class="form-group mb-3">
+                    <label>{{ item }}</label>
+                    <div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="{{ item }}" value="sim" required>
+                            <label class="form-check-label">Sim</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="{{ item }}" value="nao">
+                            <label class="form-check-label">Não</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="{{ item }}" value="parcial">
+                            <label class="form-check-label">Parcial</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="{{ item }}" value="nsp">
+                            <label class="form-check-label">NSP</label>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <p><strong>Semana:</strong> X | <strong>Data da Avaliação:</strong> {{ 'now'|date('d/m/Y') }}</p>
+            {% for item in itens %}
+                <div class="form-group mb-3">
+                    <label>{{ item }}</label>
+                    <div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="{{ item }}" value="1" required>
+                            <label class="form-check-label">1</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="{{ item }}" value="2">
+                            <label class="form-check-label">2</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="{{ item }}" value="3">
+                            <label class="form-check-label">3</label>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <div class="form-group mt-4">
+            <label for="observacoes">Observações</label>
+            <textarea class="form-control" id="observacoes" name="observacoes" rows="5"></textarea>
+        </div>
+
+        {% if tipo == 'semanal' %}
+        <div class="form-group mt-4">
+            <label for="plano_acao">Plano de Ação (se reprovado)</label>
+            <textarea class="form-control" id="plano_acao" name="plano_acao" rows="5"></textarea>
+        </div>
+        {% endif %}
+
+        <div class="form-group mt-4">
+            <label>Assinatura Digital</label>
+            <div class="signature-pad">
+                <canvas id="signature-canvas"></canvas>
+            </div>
+            <button type="button" class="btn btn-secondary mt-2" id="clear-signature">Limpar Assinatura</button>
+            <input type="hidden" name="assinatura_digital" id="assinatura_digital_input">
+        </div>
+
+        <button type="submit" class="btn btn-primary mt-4">Salvar e Assinar</button>
+    </form>
+</div>
+
+<script src="{{ url_for('static', filename='js/signature_pad.umd.min.js') }}"></script>
+<script>
+    var canvas = document.getElementById('signature-canvas');
+    var signaturePad = new SignaturePad(canvas);
+
+    document.getElementById('clear-signature').addEventListener('click', function () {
+        signaturePad.clear();
+    });
+
+    document.getElementById('checklistForm').addEventListener('submit', function(event) {
+        if (signaturePad.isEmpty()) {
+            alert("Por favor, forneça sua assinatura digital.");
+            event.preventDefault();
+        } else {
+            var dataUrl = signaturePad.toDataURL();
+            document.getElementById('assinatura_digital_input').value = dataUrl;
+        }
+    });
+</script>
+
+<style>
+    .signature-pad {
+        border: 1px solid #ced4da;
+        border-radius: 0.25rem;
+        height: 150px;
+        width: 100%;
+        box-sizing: border-box;
+    }
+    #signature-canvas {
+        width: 100%;
+        height: 100%;
+    }
+</style>
+{% endblock %}
