@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block title %}Realizar Checklist{% endblock %}
+
+{% block content %}
+<h2>Checklist para Ativo: {{ ativo.codigo }} - {{ ativo.descricao }}</h2>
+<p><strong>Setor:</strong> {{ ativo.setor }}</p>
+
+<form method="POST" enctype="multipart/form-data">
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Item</th>
+                <th class="text-center">Status</th>
+                <th>Observação / Foto</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in itens_template %}
+            <tr>
+                <td>{{ item.descricao }}</td>
+                <td class="text-center">
+                    <div class="btn-group" role="group">
+                        <input type="radio" class="btn-check" name="status_{{ item.id }}" id="ok_{{ item.id }}" value="OK" checked>
+                        <label class="btn btn-outline-success" for="ok_{{ item.id }}">OK</label>
+
+                        <input type="radio" class="btn-check" name="status_{{ item.id }}" id="falha_{{ item.id }}" value="Falha">
+                        <label class="btn btn-outline-danger" for="falha_{{ item.id }}">Falha</label>
+                    </div>
+                </td>
+                <td>
+                    <div class="falha-campos" id="campos_falha_{{ item.id }}" style="display: none;">
+                        <textarea name="obs_{{ item.id }}" class="form-control mb-2" placeholder="Observação obrigatória"></textarea>
+                        <input type="file" name="foto_{{ item.id }}" class="form-control form-control-sm">
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <button type="submit" class="btn btn-primary mt-3">Finalizar e Enviar Checklist</button>
+</form>
+
+<script>
+// Script simples para mostrar/ocultar campos de falha
+document.querySelectorAll('.btn-check').forEach(radio => {
+    radio.addEventListener('change', event => {
+        const itemId = event.target.name.split('_')[1];
+        const camposFalha = document.getElementById(`campos_falha_${itemId}`);
+        if (event.target.value === 'Falha') {
+            camposFalha.style.display = 'block';
+        } else {
+            camposFalha.style.display = 'none';
+        }
+    });
+});
+</script>
+{% endblock %}

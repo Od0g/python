@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block title %}Cadastro de Ativos{% endblock %}
+
+{% block content %}
+  <div class="row">
+    <div class="col-md-4">
+      <h3>Cadastrar Novo Ativo</h3>
+      <form method="POST" action="">
+        {{ form.hidden_tag() }}
+        <div class="mb-3">
+          {{ form.codigo.label(class="form-label") }}
+          {{ form.codigo(class="form-control") }}
+        </div>
+        <div class="mb-3">
+          {{ form.descricao.label(class="form-label") }}
+          {{ form.descricao(class="form-control") }}
+        </div>
+        <div class="mb-3">
+          {{ form.setor.label(class="form-label") }}
+          {{ form.setor(class="form-control") }}
+        </div>
+        {{ form.submit(class="btn btn-success") }}
+      </form>
+    </div>
+
+    <div class="col-md-8">
+      <h3>Ativos Cadastrados</h3>
+      <table class="table table-striped table-hover">
+        <thead>
+          <tr>
+            <th>Código</th>
+            <th>Descrição</th>
+            <th>Setor</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for ativo in lista_ativos %}
+          <tr>
+            <td>{{ ativo.codigo }}</td>
+            <td>{{ ativo.descricao }}</td>
+            <td>{{ ativo.setor }}</td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="3">Nenhum ativo cadastrado.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+{% endblock %}

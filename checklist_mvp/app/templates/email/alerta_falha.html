@@ -1,0 +1,31 @@
+<p>Olá,</p>
+<p>Um novo checklist foi registrado com falhas e requer sua atenção.</p>
+<ul>
+    <li><strong>Ativo:</strong> {{ ativo.codigo }} - {{ ativo.descricao }}</li>
+    <li><strong>Operador:</strong> {{ usuario.nome }}</li>
+    <li><strong>Data/Hora:</strong> {{ timestamp.strftime('%d/%m/%Y %H:%M') }}</li>
+</ul>
+<h3>Itens com Falha:</h3>
+<table border="1" style="border-collapse: collapse; width: 100%;">
+    <thead>
+        <tr>
+            <th style="padding: 8px;">Item</th>
+            <th style="padding: 8px;">Observação</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for resposta in respostas_falha %}
+        <tr>
+            <td style="padding: 8px;">{{ resposta.item_template.descricao }}</td>
+            <td style="padding: 8px;">{{ resposta.observacao }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+<br>
+<p>
+    Para ver o checklist completo, acesse o sistema clicando no link abaixo:
+    <br>
+    <a href="{{ url_for('ver_checklist', checklist_id=checklist_id, _external=True) }}">Ver Detalhes do Checklist</a>
+</p>
+<p>Atenciosamente,<br>Sistema de Checklist Digital</p>

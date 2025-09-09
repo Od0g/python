@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block title %}Histórico de Checklists{% endblock %}
+
+{% block content %}
+<h2>Histórico de Checklists Preenchidos</h2>
+
+<div class="card bg-light mb-4">
+  <div class="card-body">
+    <form method="GET" action="{{ url_for('historico') }}">
+      <div class="row g-3 align-items-end">
+        <div class="col-md-3">
+          <label for="data_inicio" class="form-label">Data Início</label>
+          <input type="date" class="form-control" name="data_inicio" value="{{ request.args.get('data_inicio', '') }}">
+        </div>
+        <div class="col-md-3">
+          <label for="data_fim" class="form-label">Data Fim</label>
+          <input type="date" class="form-control" name="data_fim" value="{{ request.args.get('data_fim', '') }}">
+        </div>
+        <div class="col-md-3">
+          <label for="ativo_id" class="form-label">Ativo</label>
+          <select name="ativo_id" class="form-select">
+            <option value="">Todos</option>
+            {% for ativo in ativos %}
+            <option value="{{ ativo.id }}" {% if request.args.get('ativo_id') == ativo.id|string %}selected{% endif %}>
+              {{ ativo.codigo }} - {{ ativo.descricao }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-3">
+          <button type="submit" class="btn btn-primary">Filtrar</button>
+          <a href="{{ url_for('historico') }}" class="btn btn-secondary">Limpar</a>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="mb-3">
+    <a href="{{ url_for('export_excel', **request.args) }}" class="btn btn-success">Exportar para Excel</a>
+    <a href="{{ url_for('export_pdf', **request.args) }}" class="btn btn-danger">Exportar para PDF</a>
+</div>
+
+
+<table class="table table-striped">
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Data</th>
+      <th>Ativo</th>
+      <th>Operador</th>
+      <th>Status</th>
+      <th>Ações</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for checklist in checklists %}
+    <tr>
+      <td>{{ checklist.id }}</td>
+      <td>{{ checklist.timestamp.strftime('%d/%m/%Y %H:%M') }}</td>
+      <td>{{ checklist.ativo.codigo if checklist.ativo else 'N/A' }}</td>
+      <td>{{ checklist.usuario.nome if checklist.usuario else 'N/A' }}</td>
+      <td>
+        {% set tem_falha = checklist.respostas.filter_by(status='Falha').first() %}
+        {% if tem_falha %}
+          <span class="badge bg-danger">Com Falhas</span>
+        {% else %}
+          <span class="badge bg-success">Tudo OK</span>
+        {% endif %}
+      </td>
+      <td>
+        <a href="{{ url_for('ver_checklist', checklist_id=checklist.id) }}" class="btn btn-info btn-sm">Ver Detalhes</a>
+      </td>
+    </tr>
+    {% else %}
+    <tr>
+      <td colspan="6" class="text-center">Nenhum checklist encontrado com os filtros aplicados.</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+{% endblock %}

@@ -11,3 +11,12 @@ class Config:
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
         'sqlite:///' + os.path.join(basedir, 'app.db')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+
+
+    # Configuração de E-mail
+    MAIL_SERVER = os.environ.get('MAIL_SERVER') or 'smtp.googlemail.com'
+    MAIL_PORT = int(os.environ.get('MAIL_PORT') or 587)
+    MAIL_USE_TLS = os.environ.get('MAIL_USE_TLS') is not None or True
+    MAIL_USERNAME = os.environ.get('MAIL_USERNAME') or 'seu-email@gmail.com'  # <-- SEU E-MAIL AQUI
+    MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD') or 'sua-senha-de-app'   # <-- SUA SENHA DE APP AQUI
+    ADMINS = ['email-do-gestor@exemplo.com'] # E-mail que receberá os alertas

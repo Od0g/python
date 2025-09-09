@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+  <h2>Selecione um Ativo para Iniciar o Checklist</h2>
+  <div class="list-group">
+    {% for ativo in lista_ativos %}
+      <a href="{{ url_for('checklist', ativo_id=ativo.id) }}" class="list-group-item list-group-item-action">
+        <strong>{{ ativo.codigo }}</strong> - {{ ativo.descricao }} (Setor: {{ ativo.setor }})
+      </a>
+    {% else %}
+      <p>Nenhum ativo cadastrado. <a href="{{ url_for('ativos') }}">Cadastre um aqui.</a></p>
+    {% endfor %}
+  </div>
+{% endblock %}

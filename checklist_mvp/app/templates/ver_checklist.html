@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Detalhes do Checklist #{{ checklist.id }}{% endblock %}
+
+{% block content %}
+<h3>Detalhes do Checklist #{{ checklist.id }}</h3>
+<p><strong>Ativo:</strong> {{ checklist.ativo.codigo }} - {{ checklist.ativo.descricao }}</p>
+<p><strong>Operador:</strong> {{ checklist.usuario.nome }}</p>
+<p><strong>Data:</strong> {{ checklist.timestamp.strftime('%d/%m/%Y %H:%M') }}</p>
+<hr>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Item</th>
+            <th>Status</th>
+            <th>Observação</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for resposta in checklist.respostas %}
+        <tr class="{{ 'table-danger' if resposta.status == 'Falha' else '' }}">
+            <td>{{ resposta.item_template.descricao }}</td>
+            <td>{{ resposta.status }}</td>
+            <td>
+                {{ resposta.observacao }}
+                {% if resposta.foto_path %}
+                    <br><small><a href="{{ url_for('static', filename=resposta.foto_path.split('app/static/')[1]) }}" target="_blank">Ver foto</a></small>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<a href="{{ url_for('historico') }}" class="btn btn-secondary mt-3">Voltar ao Histórico</a>
+{% endblock %}
