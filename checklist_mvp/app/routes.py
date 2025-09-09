@@ -1,4 +1,6 @@
 # app/routes.py
+from app.email import send_email
+from flask import render_template_string
 from datetime import datetime
 import pandas as pd
 from flask import Response, render_template_string
@@ -14,10 +16,11 @@ from app.forms import LoginForm, AtivoForm
 
 @app.route('/')
 @app.route('/index')
-@login_required # Protege a página, exigindo login
+@login_required
 def index():
-    # A página inicial agora será o dashboard de ativos
-    return redirect(url_for('ativos'))
+    # Página inicial para o operador selecionar um ativo para checagem
+    lista_ativos = Ativo.query.all()
+    return render_template('dashboard.html', lista_ativos=lista_ativos)
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -88,15 +91,6 @@ def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-@app.route('/')
-@app.route('/index')
-@login_required
-def index():
-    # Página inicial para o operador selecionar um ativo para checagem
-    lista_ativos = Ativo.query.all()
-    return render_template('dashboard.html', lista_ativos=lista_ativos)
-
-
 @app.route('/checklist/<int:ativo_id>', methods=['GET', 'POST'])
 @login_required
 def checklist(ativo_id):
@@ -104,25 +98,24 @@ def checklist(ativo_id):
     itens_template = ItemTemplate.query.all()
 
     if request.method == 'POST':
-        # 1. Criar o cabeçalho do Checklist
         novo_checklist = Checklist(
             usuario_id=current_user.id,
             ativo_id=ativo.id,
-            turno='Manhã' # Exemplo, pode ser melhorado
+            turno='Manhã', # Exemplo
+            versao='1.0'   # Versão atual
         )
         db.session.add(novo_checklist)
-        db.session.commit()
+        db.session.commit() # Commit para obter o ID do novo_checklist
 
-        # 2. Iterar sobre os itens e salvar as respostas
+        respostas_com_falha = []
         for item in itens_template:
             status = request.form.get(f'status_{item.id}')
             observacao = request.form.get(f'obs_{item.id}', '')
             foto = request.files.get(f'foto_{item.id}')
-
             foto_path = None
+
             if foto and allowed_file(foto.filename):
-                filename = secure_filename(foto.filename)
-                # Garante que o diretório de upload existe
+                filename = secure_filename(f"{novo_checklist.id}_{item.id}_{foto.filename}")
                 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
                 foto_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
                 foto.save(foto_path)
@@ -135,9 +128,32 @@ def checklist(ativo_id):
                 foto_path=foto_path
             )
             db.session.add(resposta)
+
+            if status == 'Falha':
+                respostas_com_falha.append(resposta)
         
         db.session.commit()
-        flash(f'Checklist do ativo {ativo.codigo} salvo com sucesso!', 'success')
+
+        # Disparar e-mail se houver falhas
+        if respostas_com_falha:
+            send_email(
+                subject=f'[ALERTA] Falha registrada no ativo {ativo.codigo}',
+                sender=app.config['ADMINS'][0],
+                recipients=app.config['ADMINS'],
+                text_body=f"Uma falha foi registrada no ativo {ativo.codigo}. Por favor, verifique o sistema.",
+                html_body=render_template(
+                    'email/alerta_falha.html',
+                    ativo=ativo,
+                    usuario=current_user,
+                    timestamp=novo_checklist.timestamp,
+                    respostas_falha=respostas_com_falha,
+                    checklist_id=novo_checklist.id
+                )
+            )
+            flash(f'Checklist salvo. Um alerta de falha foi enviado para a gestão!', 'warning')
+        else:
+            flash(f'Checklist do ativo {ativo.codigo} salvo com sucesso!', 'success')
+            
         return redirect(url_for('index'))
 
     return render_template('checklist.html', ativo=ativo, itens_template=itens_template)

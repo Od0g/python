@@ -72,12 +72,8 @@ class ChecklistResposta(db.Model):
     foto_path = db.Column(db.String(300)) # Caminho para a imagem salva
     
     # Chaves estrangeiras
-    usuario_id = db.Column(db.Integer, db.ForeignKey('usuario.id'))
-    ativo_id = db.Column(db.Integer, db.ForeignKey('ativo.id'))
-    
-    # Adicione os backrefs aqui
-    usuario = db.relationship('Usuario', backref='checklists')
-    ativo = db.relationship('Ativo', backref='checklists')
+    checklist_id = db.Column(db.Integer, db.ForeignKey('checklist.id'))
+    item_template_id = db.Column(db.Integer, db.ForeignKey('item_template.id'))
     
     # Relacionamentos
     item_template = db.relationship('ItemTemplate')
