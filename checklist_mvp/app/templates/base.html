@@ -16,6 +16,11 @@
               <li class="nav-item">
                 <a class="nav-link" href="{{ url_for('index') }}">Realizar Checklist</a>
               </li>
+              {% if current_user.is_authenticated and current_user.perfil == 'admin' %}
+              <li class="nav-item">
+                  <a class="nav-link" href="{{ url_for('gerenciar_usuarios') }}">Gerenciar Usuários</a>
+              </li>
+              {% endif %}
               <li class="nav-item">
                 <a class="nav-link" href="{{ url_for('ativos') }}">Ativos</a>
               </li>

@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Gerenciar Usuários{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-4">
+        <h3>Cadastrar Novo Colaborador</h3>
+        <form method="POST" action="">
+            {{ form.hidden_tag() }}
+            <div class="mb-3">
+                {{ form.matricula.label(class="form-label") }}
+                {{ form.matricula(class="form-control") }}
+            </div>
+            <div class="mb-3">
+                {{ form.nome.label(class="form-label") }}
+                {{ form.nome(class="form-control") }}
+            </div>
+            <div class="mb-3">
+                {{ form.password.label(class="form-label") }}
+                {{ form.password(class="form-control") }}
+            </div>
+            <div class="mb-3">
+                {{ form.perfil.label(class="form-label") }}
+                {{ form.perfil(class="form-control") }}
+            </div>
+            {{ form.submit(class="btn btn-success") }}
+        </form>
+    </div>
+
+    <div class="col-md-8">
+        <h3>Colaboradores Cadastrados</h3>
+        <table class="table table-striped table-hover">
+            <thead>
+                <tr>
+                    <th>Matrícula</th>
+                    <th>Nome</th>
+                    <th>Perfil</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for usuario in lista_usuarios %}
+                <tr>
+                    <td>{{ usuario.matricula }}</td>
+                    <td>{{ usuario.nome }}</td>
+                    <td>{{ usuario.perfil }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="3">Nenhum usuário cadastrado.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

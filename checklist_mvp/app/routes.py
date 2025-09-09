@@ -1,4 +1,5 @@
 # app/routes.py
+from app.forms import CadastroUsuarioForm # Adicionar esta importação no topo do arquivo
 from app.email import send_email
 from flask import render_template_string
 from datetime import datetime
@@ -13,6 +14,19 @@ from flask_login import current_user, login_user, logout_user, login_required
 from app import app, db
 from app.models import Usuario, Ativo
 from app.forms import LoginForm, AtivoForm
+from functools import wraps
+from flask_login import current_user
+
+
+def admin_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not current_user.is_authenticated or current_user.perfil != 'admin':
+            flash('Acesso negado. Esta área é restrita a administradores.', 'danger')
+            return redirect(url_for('index'))
+        return f(*args, **kwargs)
+    return decorated_function
+
 
 @app.route('/')
 @app.route('/index')
@@ -262,5 +276,30 @@ def export_pdf():
         mimetype='application/pdf',
         headers={'Content-Disposition': 'attachment;filename=historico_checklists.pdf'}
     )
+    
+@app.route('/admin/usuarios', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def gerenciar_usuarios():
+    form = CadastroUsuarioForm()
+    if form.validate_on_submit():
+        user_existe = Usuario.query.filter_by(matricula=form.matricula.data).first()
+        if user_existe:
+            flash('Matrícula já cadastrada no sistema.', 'danger')
+        else:
+            novo_usuario = Usuario(
+                matricula=form.matricula.data,
+                nome=form.nome.data,
+                perfil=form.perfil.data
+            )
+            novo_usuario.set_password(form.password.data)
+            db.session.add(novo_usuario)
+            db.session.commit()
+            flash('Novo usuário cadastrado com sucesso!', 'success')
+            return redirect(url_for('gerenciar_usuarios'))
+            
+    lista_usuarios = Usuario.query.all()
+    return render_template('gerenciar_usuarios.html', form=form, lista_usuarios=lista_usuarios)
 
-  
+
+
