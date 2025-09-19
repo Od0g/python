@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <h1 class="h3 mb-4 text-gray-800">Checklists Pendentes de Validação</h1>
+
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Lista de Checklists</h6>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered" width="100%" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th>Equipamento</th>
+                            <th>Setor</th>
+                            <th>Data</th>
+                            <th>Colaborador</th>
+                            <th>Status</th>
+                            <th>Ação</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for checklist in checklists %}
+                        <tr class="{% if checklist.status == 'Não Conforme' %}table-danger{% endif %}">
+                            <td>{{ checklist.equipamento.nome }}</td>
+                            <td>{{ checklist.equipamento.setor.nome }}</td>
+                            <td>{{ checklist.data.strftime('%d/%m/%Y %H:%M') }}</td>
+                            <td>{{ checklist.colaborador.nome }}</td>
+                            <td>
+                                <span class="badge bg-{% if checklist.status == 'Não Conforme' %}danger{% else %}warning{% endif %}">
+                                    {{ checklist.status }}
+                                </span>
+                            </td>
+                            <td>
+                                <a href="{{ url_for('main.view_checklist', checklist_id=checklist.id) }}" class="btn btn-info btn-sm">
+                                    Visualizar e Assinar
+                                </a>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="6" class="text-center">Nenhum checklist pendente de validação.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

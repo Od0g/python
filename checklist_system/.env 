@@ -1,0 +1,8 @@
+ECRET_KEY='101203'
+
+# Configuração de E-mail (exemplo com Gmail)
+MAIL_SERVER=smtp.gmail.com
+MAIL_PORT=587
+MAIL_USE_TLS=True
+MAIL_USERNAME='seu-email@gmail.com'
+MAIL_PASSWORD='sua-senha-de-app' # Importante: use uma senha de app, não a sua senha principal

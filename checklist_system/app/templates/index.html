@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <h1 class="h3 mb-4 text-gray-800">Dashboard</h1>
+
+    <div class="row">
+        <div class="col-xl-4 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Total de Checklists Realizados</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-list-check fs-2 text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-4 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Conformidade</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ "%.2f"|format(percent_ok) }}%</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-check2-circle fs-2 text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-4 col-md-6 mb-4">
+            <div class="card border-left-danger shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
+                                Não Conformidades Abertas</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_nok }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-exclamation-triangle-fill fs-2 text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Últimas Não Conformidades Registradas</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                            <thead>
+                                <tr>
+                                    <th>Equipamento</th>
+                                    <th>Setor</th>
+                                    <th>Data</th>
+                                    <th>Colaborador</th>
+                                    <th>Ação</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for checklist in recent_nok %}
+                                <tr>
+                                    <td>{{ checklist.equipamento.nome }}</td>
+                                    <td>{{ checklist.equipamento.setor.nome }}</td>
+                                    <td>{{ checklist.data.strftime('%d/%m/%Y %H:%M') }}</td>
+                                    <td>{{ checklist.colaborador.nome }}</td>
+                                    <td>
+                                        <a href="{{ url_for('main.view_checklist', checklist_id=checklist.id) }}" class="btn btn-warning btn-sm">
+                                            Validar
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="5" class="text-center">Nenhuma não conformidade encontrada.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
