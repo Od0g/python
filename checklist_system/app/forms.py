@@ -30,4 +30,15 @@ class SectorForm(FlaskForm):
 class EquipmentForm(FlaskForm):
     nome = StringField('Nome do Equipamento', validators=[DataRequired()])
     setor = SelectField('Setor', coerce=int, validators=[DataRequired()])
+    # NOVO CAMPO
+    template = SelectField('Modelo de Checklist', coerce=int, validators=[DataRequired()])
     submit = SubmitField('Cadastrar Equipamento')
+    
+class TemplateForm(FlaskForm):
+    nome = StringField('Nome do Modelo', validators=[DataRequired()])
+    descricao = StringField('Descrição (Opcional)')
+    submit = SubmitField('Salvar Modelo')
+
+class QuestionForm(FlaskForm):
+    texto = StringField('Texto da Pergunta', validators=[DataRequired()])
+    submit = SubmitField('Adicionar Pergunta')

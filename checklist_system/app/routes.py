@@ -3,11 +3,17 @@ from flask_login import login_required, current_user
 from app import db
 from app.models import User, Sector, Equipment, Checklist, UserRoles
 from app.forms import UserForm, SectorForm, EquipmentForm
+from app.models import ChecklistTemplate, Question # Adicione nos imports
+from app.forms import TemplateForm, QuestionForm # Adicione nos imports
 from app.email import send_non_compliance_alert
 import qrcode
 import os
 import json
 from functools import wraps
+from flask import Response
+from weasyprint import HTML
+
+
 
 bp = Blueprint('main', __name__)
 
@@ -84,8 +90,10 @@ def manage_sectors():
 def manage_equipment():
     form = EquipmentForm()
     form.setor.choices = [(s.id, s.nome) for s in Sector.query.order_by('nome').all()]
+    # NOVA LINHA PARA POPULAR O DROPDOWN DE MODELOS
+    form.template.choices = [(t.id, t.nome) for t in ChecklistTemplate.query.order_by('nome').all()]
     if form.validate_on_submit():
-        equip = Equipment(nome=form.nome.data, setor_id=form.setor.data)
+        equip = Equipment(nome=form.nome.data, setor_id=form.setor.data, template_id=form.template.data) # Adicionado template_id
         db.session.add(equip)
         db.session.flush() # Para obter o ID do equipamento antes do commit
 
@@ -110,15 +118,14 @@ def manage_equipment():
 def fill_checklist(equipment_id):
     equipment = Equipment.query.get_or_404(equipment_id)
     
-    # Lista de perguntas (pode vir de um modelo no futuro)
-    perguntas = [
-        "O equipamento está limpo e em boas condições visuais?",
-        "Os cabos e conexões elétricas estão intactos?",
-        "Há sinais de vazamento de fluidos?",
-        "Os dispositivos de segurança (botões de emergência, guardas) estão funcionando?",
-        "O equipamento está operando sem ruídos ou vibrações anormais?"
-    ]
+    # VERIFICA SE O EQUIPAMENTO TEM UM MODELO VINCULADO
+    if not equipment.template:
+        flash('Este equipamento não possui um modelo de checklist vinculado.', 'danger')
+        return redirect(url_for('main.index'))
 
+    # BUSCA AS PERGUNTAS DO BANCO DE DADOS
+    perguntas = equipment.template.perguntas.order_by('id').all()
+    
     if request.method == 'POST':
         data = request.form
         respostas_json = json.loads(data.get('respostas'))
@@ -194,3 +201,69 @@ def view_checklist(checklist_id):
             return redirect(url_for('main.pending_checklists'))
 
     return render_template('view_checklist.html', title='Validar Checklist', checklist=checklist)
+
+# Rota para listar e criar Modelos de Checklist
+@bp.route('/templates', methods=['GET', 'POST'])
+@login_required
+@role_required('GESTOR', 'COORDENADOR')
+def manage_templates():
+    form = TemplateForm()
+    if form.validate_on_submit():
+        new_template = ChecklistTemplate(nome=form.nome.data, descricao=form.descricao.data)
+        db.session.add(new_template)
+        db.session.commit()
+        flash('Modelo de checklist criado com sucesso!', 'success')
+        return redirect(url_for('main.manage_templates'))
+    templates = ChecklistTemplate.query.all()
+    return render_template('templates.html', title='Modelos de Checklist', form=form, templates=templates)
+
+# Rota para gerenciar as perguntas de um modelo específico
+@bp.route('/templates/<int:template_id>/questions', methods=['GET', 'POST'])
+@login_required
+@role_required('GESTOR', 'COORDENADOR')
+def manage_questions(template_id):
+    template = ChecklistTemplate.query.get_or_404(template_id)
+    form = QuestionForm()
+    if form.validate_on_submit():
+        new_question = Question(texto=form.texto.data, template_id=template.id)
+        db.session.add(new_question)
+        db.session.commit()
+        flash('Pergunta adicionada com sucesso!', 'success')
+        return redirect(url_for('main.manage_questions', template_id=template.id))
+    
+    # Rota para apagar uma pergunta
+    question_to_delete = request.args.get('delete')
+    if question_to_delete:
+        question = Question.query.get_or_404(question_to_delete)
+        db.session.delete(question)
+        db.session.commit()
+        flash('Pergunta removida!', 'warning')
+        return redirect(url_for('main.manage_questions', template_id=template.id))
+
+    questions = template.perguntas.all()
+    return render_template('manage_questions.html', title='Gerenciar Perguntas', form=form, template=template, questions=questions)
+
+@bp.route('/checklist/<int:checklist_id>/download')
+@login_required
+def download_checklist_pdf(checklist_id):
+    checklist = Checklist.query.get_or_404(checklist_id)
+    
+    # Renderiza o template do PDF em uma string HTML
+    rendered_html = render_template('checklist_pdf.html', checklist=checklist)
+    
+    # Gera o PDF a partir do HTML usando WeasyPrint
+    pdf = HTML(string=rendered_html).write_pdf()
+    
+    # Cria uma resposta Flask com o conteúdo do PDF
+    return Response(pdf,
+                    mimetype='application/pdf',
+                    headers={'Content-Disposition': f'attachment;filename=checklist_{checklist.id}.pdf'})
+
+# Adicione esta rota em app/routes.py
+@bp.route('/history')
+@login_required
+@role_required('GESTOR', 'COORDENADOR')
+def history():
+    # No futuro, podemos adicionar filtros de data, setor, etc. aqui
+    checklists = Checklist.query.order_by(Checklist.data.desc()).all()
+    return render_template('history.html', title='Histórico de Checklists', checklists=checklists)

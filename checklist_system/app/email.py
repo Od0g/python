@@ -1,7 +1,9 @@
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-from flask import current_app, render_template
+from flask import current_app
+from app.models import User, Alert # Adicione a importação de User e Alert
+from app import db # Adicione a importação de db
 
 def send_email(subject, sender, recipients, text_body, html_body):
     msg = MIMEMultipart('alternative')
@@ -16,17 +18,30 @@ def send_email(subject, sender, recipients, text_body, html_body):
     msg.attach(part2)
 
     try:
-        with smtplib.SMTP(current_app.config['MAIL_SERVER'], current_app.config['MAIL_PORT']) as server:
-            if current_app.config['MAIL_USE_TLS']:
-                server.starttls()
-            server.login(current_app.config['MAIL_USERNAME'], current_app.config['MAIL_PASSWORD'])
-            server.sendmail(sender, recipients, msg.as_string())
-            print("E-mail enviado com sucesso!")
+        # Tente usar as configurações do app Flask, se disponíveis
+        if current_app:
+            with smtplib.SMTP(current_app.config['MAIL_SERVER'], current_app.config['MAIL_PORT']) as server:
+                if current_app.config['MAIL_USE_TLS']:
+                    server.starttls()
+                server.login(current_app.config['MAIL_USERNAME'], current_app.config['MAIL_PASSWORD'])
+                server.sendmail(sender, recipients, msg.as_string())
+                print("E-mail de alerta enviado com sucesso!")
+        else:
+            # Fallback para testes ou ambientes sem contexto de app
+            print("AVISO: Sem contexto de aplicação Flask. O e-mail não será enviado.")
+
     except Exception as e:
         print(f"Falha ao enviar e-mail: {e}")
 
 def send_non_compliance_alert(checklist):
-    gestor = checklist.equipamento.setor.users.filter_by(cargo='GESTOR').first()
+    # --- BLOCO CORRIGIDO ---
+    gestor = None
+    for user in checklist.equipamento.setor.users:
+        if user.cargo.name == 'GESTOR':
+            gestor = user
+            break
+    # -----------------------
+
     coordenadores = User.query.filter_by(cargo='COORDENADOR').all()
     
     if not gestor and not coordenadores:
@@ -38,8 +53,11 @@ def send_non_compliance_alert(checklist):
         recipients.append(gestor.email)
     recipients.extend([c.email for c in coordenadores])
     
+    # Garante que não há e-mails duplicados
+    recipients = list(set(recipients))
+    
     subject = f"Alerta de Não Conformidade: Equipamento {checklist.equipamento.nome}"
-    sender = current_app.config['MAIL_USERNAME']
+    sender = current_app.config['MAIL_USERNAME'] if current_app else 'noreply@example.com'
     
     html_body = f"""
     <h1>Alerta de Não Conformidade</h1>
@@ -54,8 +72,6 @@ def send_non_compliance_alert(checklist):
     send_email(subject, sender, recipients, text_body, html_body)
     
     # Registra o alerta no banco
-    from app.models import Alert
-    from app import db
     for recipient in recipients:
         alert = Alert(checklist_id=checklist.id, enviado_para=recipient)
         db.session.add(alert)

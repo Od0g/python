@@ -20,6 +20,7 @@
                                 Cadastros
                             </a>
                             <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                                <li><a class="dropdown-item" href="{{ url_for('main.manage_templates') }}">Modelos de Checklist</a></li>
                                 <li><a class="dropdown-item" href="{{ url_for('main.manage_users') }}">Usuários</a></li>
                                 <li><a class="dropdown-item" href="{{ url_for('main.manage_sectors') }}">Setores</a></li>
                                 <li><a class="dropdown-item" href="{{ url_for('main.manage_equipment') }}">Equipamentos</a></li>
@@ -27,6 +28,9 @@
                         </li>
                          <li class="nav-item">
                             <a class="nav-link" href="{{ url_for('main.pending_checklists') }}">Checklists Pendentes</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('main.history') }}">Histórico</a>
                         </li>
                     {% endif %}
                 {% endif %}

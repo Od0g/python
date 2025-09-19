@@ -13,20 +13,22 @@
                 <div class="card-body">
                     <form method="POST" action="">
                         {{ form.hidden_tag() }}
+                        
                         <div class="mb-3">
                             {{ form.nome.label(class="form-label") }}
-                            {{ form.nome(class="form-control", placeholder="Ex: Furadeira de Bancada XYZ") }}
-                             {% for error in form.nome.errors %}
-                                <span class="text-danger small">{{ error }}</span>
-                            {% endfor %}
+                            {{ form.nome(class="form-control", placeholder="Ex: Rádio HT-550") }}
                         </div>
+                        
                         <div class="mb-3">
                             {{ form.setor.label(class="form-label") }}
                             {{ form.setor(class="form-select") }}
-                             {% for error in form.setor.errors %}
-                                <span class="text-danger small">{{ error }}</span>
-                            {% endfor %}
                         </div>
+
+                        <div class="mb-3">
+                            {{ form.template.label(class="form-label") }}
+                            {{ form.template(class="form-select") }}
+                        </div>
+                        
                         <div class="d-grid">
                             {{ form.submit(class="btn btn-primary") }}
                         </div>
@@ -48,6 +50,7 @@
                                     <th>ID</th>
                                     <th>Nome</th>
                                     <th>Setor</th>
+                                    <th>Modelo de Checklist</th>
                                     <th>QR Code</th>
                                 </tr>
                             </thead>
@@ -58,16 +61,23 @@
                                     <td>{{ equipment.nome }}</td>
                                     <td>{{ equipment.setor.nome }}</td>
                                     <td>
+                                        {% if equipment.template %}
+                                            {{ equipment.template.nome }}
+                                        {% else %}
+                                            <span class="text-muted">Nenhum</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
                                         {% if equipment.qr_code %}
                                         <img src="{{ url_for('static', filename=equipment.qr_code) }}" alt="QR Code para {{ equipment.nome }}" style="width: 100px; height: 100px;">
                                         {% else %}
-                                        <span>Erro ao gerar QR Code</span>
+                                        <span>Erro ao gerar</span>
                                         {% endif %}
                                     </td>
                                 </tr>
                                 {% else %}
                                 <tr>
-                                    <td colspan="4" class="text-center">Nenhum equipamento cadastrado.</td>
+                                    <td colspan="5" class="text-center">Nenhum equipamento cadastrado.</td>
                                 </tr>
                                 {% endfor %}
                             </tbody>

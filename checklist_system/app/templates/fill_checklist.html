@@ -20,7 +20,7 @@
 
                         {% for pergunta in perguntas %}
                         <div class="pergunta-item mb-4 p-3 border rounded">
-                            <label class="form-label fw-bold">{{ loop.index }}. {{ pergunta }}</label>
+                            <label class="form-label fw-bold">{{ loop.index }}. {{ pergunta.texto }}</label>
                             <div class="ms-3">
                                 <div class="form-check form-check-inline">
                                     <input class="form-check-input" type="radio" name="resposta-{{ loop.index }}" value="Sim">
@@ -51,11 +51,12 @@
 
                         <div class="mb-3">
                             <label class="form-label fw-bold">Assinatura do Colaborador</label>
-                            <div class="border bg-light">
-                                <canvas id="signature-pad-colab" class="w-100" height="200"></canvas>
+                            
+                            <div class="signature-canvas-container">
+                                <canvas id="signature-pad-colab"></canvas>
                             </div>
                             <div class="text-center mt-2">
-                                <button id="clear-colab" class="btn btn-secondary btn-sm">Limpar Assinatura</button>
+                                <button type="button" id="clear-colab" class="btn btn-secondary btn-sm">Limpar Assinatura</button>
                             </div>
                         </div>
 
