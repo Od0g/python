@@ -1,0 +1,46 @@
+# .github/workflows/main.yml
+
+name: CI/CD Pipeline para Aplicação Checklist
+
+# Gatilho: Este workflow roda toda vez que há um push na branch 'main'
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  # Job 1: Construir e Testar a Aplicação
+  build-and-test:
+    name: Construir e Testar
+    runs-on: ubuntu-latest # Usar uma máquina virtual Linux
+
+    steps:
+      # 1. Baixa o código do seu repositório
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      # 2. Configura o ambiente Python
+      - name: Configurar Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      # 3. Instala as dependências
+      - name: Instalar dependências
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      
+      # 4. Roda os testes!
+      - name: Executar testes com Pytest
+        run: |
+          pytest
+
+  # Job 2: Fazer o Deploy (só roda se o Job 1 passar)
+  deploy:
+    name: Fazer Deploy no Render
+    runs-on: ubuntu-latest
+    needs: build-and-test # Dependência: só roda se 'build-and-test' for bem-sucedido
+
+    steps:
+      - name: Disparar o Deploy Hook do Render
+        run: curl "${{ secrets.RENDER_DEPLOY_HOOK_URL }}"
