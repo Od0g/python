@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Checklist - {{ checklist.equipamento.nome }}</title>
+    <style>
+        body { font-family: sans-serif; font-size: 12px; }
+        h1, h2, h3 { color: #333; }
+        .header { text-align: center; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 20px; }
+        .details, .answers, .signatures { margin-bottom: 20px; }
+        .details table { width: 100%; border-collapse: collapse; }
+        .details td { padding: 5px; }
+        .answers ul { list-style-type: none; padding: 0; }
+        .answers li { background-color: #f9f9f9; padding: 8px; border: 1px solid #ddd; margin-bottom: 5px; display: flex; justify-content: space-between; }
+        .signatures img { max-width: 250px; max-height: 100px; }
+        .signatures .sig-box { border: 1px solid #ccc; padding: 10px; margin-top: 10px; text-align: center; }
+        .status-badge { padding: 3px 8px; border-radius: 5px; color: white; font-weight: bold; }
+        .status-ok { background-color: #28a745; }
+        .status-nok { background-color: #dc3545; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Relatório de Checklist</h1>
+    </div>
+
+    <div class="details">
+        <h2>Detalhes do Checklist</h2>
+        <table>
+            <tr>
+                <td><strong>Equipamento:</strong></td>
+                <td>{{ checklist.equipamento.nome }}</td>
+            </tr>
+            <tr>
+                <td><strong>Setor:</strong></td>
+                <td>{{ checklist.equipamento.setor.nome }}</td>
+            </tr>
+            <tr>
+                <td><strong>Data:</strong></td>
+                <td>{{ checklist.data.strftime('%d/%m/%Y às %H:%M') }}</td>
+            </tr>
+            <tr>
+                <td><strong>Colaborador:</strong></td>
+                <td>{{ checklist.colaborador.nome }}</td>
+            </tr>
+             <tr>
+                <td><strong>Status:</strong></td>
+                <td>
+                    <span class="status-badge {% if 'Não Conforme' in checklist.status %}status-nok{% else %}status-ok{% endif %}">
+                        {{ checklist.status }}
+                    </span>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="answers">
+        <h3>Respostas</h3>
+        <ul>
+            {% for resposta in checklist.respostas %}
+            <li>
+                <span>{{ resposta.pergunta }}</span>
+                <strong>{{ resposta.resposta }}</strong>
+            </li>
+            {% endfor %}
+        </ul>
+        <h4>Observações:</h4>
+        <p>{{ checklist.observacoes or 'Nenhuma.' }}</p>
+    </div>
+
+    <div class="signatures">
+        <h3>Assinaturas</h3>
+        <table style="width: 100%;">
+            <tr>
+                <td style="width: 50%; text-align: center;">
+                    <strong>Colaborador</strong>
+                    <div class="sig-box">
+                        <img src="{{ checklist.assinatura_colaborador }}" alt="Assinatura do Colaborador">
+                    </div>
+                </td>
+                <td style="width: 50%; text-align: center;">
+                    <strong>Gestor / Coordenador</strong>
+                    <div class="sig-box">
+                        {% if checklist.assinatura_gestor %}
+                            <img src="{{ checklist.assinatura_gestor }}" alt="Assinatura do Gestor">
+                        {% else %}
+                            <span>Pendente de validação</span>
+                        {% endif %}
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+</body>
+</html>

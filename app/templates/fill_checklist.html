@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="card shadow-lg my-5">
+                <div class="card-header text-center bg-primary text-white">
+                    <h3 class="my-3">Checklist de Equipamento</h3>
+                </div>
+                <div class="card-body p-5">
+                    <h4 class="mb-4">Equipamento: <strong>{{ equipment.nome }}</strong></h4>
+                    <h5 class="mb-4 text-muted">Setor: <strong>{{ equipment.setor.nome }}</strong></h5>
+                    
+                    <hr>
+
+                    <form id="checklistForm" method="POST" action="">
+                        <input type="hidden" name="respostas" id="respostas">
+                        <input type="hidden" name="assinatura_colaborador" id="assinatura_colaborador">
+
+                        {% for pergunta in perguntas %}
+                        <div class="pergunta-item mb-4 p-3 border rounded">
+                            <label class="form-label fw-bold">{{ loop.index }}. {{ pergunta.texto }}</label>
+                            <div class="ms-3">
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="resposta-{{ loop.index }}" value="Sim">
+                                    <label class="form-check-label">Sim</label>
+                                </div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="resposta-{{ loop.index }}" value="Não">
+                                    <label class="form-check-label">Não</label>
+                                </div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="resposta-{{ loop.index }}" value="Parcial">
+                                    <label class="form-check-label">Parcial</label>
+                                </div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="resposta-{{ loop.index }}" value="NSP">
+                                    <label class="form-check-label">NSP (Não se aplica)</label>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+
+                        <hr>
+                        
+                        <div class="mb-4">
+                            <label for="observacoes" class="form-label fw-bold">Observações Adicionais</label>
+                            <textarea name="observacoes" class="form-control" id="observacoes" rows="4" placeholder="Descreva qualquer detalhe, problema ou observação relevante..."></textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Assinatura do Colaborador</label>
+                            
+                            <div class="signature-canvas-container">
+                                <canvas id="signature-pad-colab"></canvas>
+                            </div>
+                            <div class="text-center mt-2">
+                                <button type="button" id="clear-colab" class="btn btn-secondary btn-sm">Limpar Assinatura</button>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-success btn-lg">Enviar Checklist</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

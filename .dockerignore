@@ -1,0 +1,12 @@
+venv
+__pycache__
+*.pyc
+.env
+.flaskenv
+.git
+.gitignore
+app.db
+migrations/
+create_db.py
+pytest.ini
+tests/

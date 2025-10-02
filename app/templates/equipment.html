@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <h1 class="h3 mb-4 text-gray-800">Gerenciar Equipamentos</h1>
+
+    <div class="row">
+        <div class="col-lg-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Adicionar Novo Equipamento</h6>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="mb-3">
+                            {{ form.nome.label(class="form-label") }}
+                            {{ form.nome(class="form-control", placeholder="Ex: Rádio HT-550") }}
+                        </div>
+                        
+                        <div class="mb-3">
+                            {{ form.setor.label(class="form-label") }}
+                            {{ form.setor(class="form-select") }}
+                        </div>
+
+                        <div class="mb-3">
+                            {{ form.template.label(class="form-label") }}
+                            {{ form.template(class="form-select") }}
+                        </div>
+                        
+                        <div class="d-grid">
+                            {{ form.submit(class="btn btn-primary") }}
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-8">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Equipamentos Cadastrados</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered" width="100%" cellspacing="0">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Nome</th>
+                                    <th>Setor</th>
+                                    <th>Modelo de Checklist</th>
+                                    <th>QR Code</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for equipment in equipments %}
+                                <tr>
+                                    <td>{{ equipment.id }}</td>
+                                    <td>{{ equipment.nome }}</td>
+                                    <td>{{ equipment.setor.nome }}</td>
+                                    <td>
+                                        {% if equipment.template %}
+                                            {{ equipment.template.nome }}
+                                        {% else %}
+                                            <span class="text-muted">Nenhum</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if equipment.qr_code %}
+                                        <img src="{{ url_for('static', filename=equipment.qr_code) }}" alt="QR Code para {{ equipment.nome }}" style="width: 100px; height: 100px;">
+                                        {% else %}
+                                        <span>Erro ao gerar</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="5" class="text-center">Nenhum equipamento cadastrado.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

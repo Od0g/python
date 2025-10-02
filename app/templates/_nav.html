@@ -1,0 +1,52 @@
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="{{ url_for('main.index') }}">
+            <i class="bi bi-check2-square"></i>
+            Checklist Sys
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                {% if current_user.is_authenticated %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('main.index') }}">Dashboard</a>
+                    </li>
+                    
+                    {% if current_user.cargo.name in ['GESTOR', 'COORDENADOR'] %}
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                Cadastros
+                            </a>
+                            <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                                <li><a class="dropdown-item" href="{{ url_for('main.manage_templates') }}">Modelos de Checklist</a></li>
+                                <li><a class="dropdown-item" href="{{ url_for('main.manage_users') }}">Usuários</a></li>
+                                <li><a class="dropdown-item" href="{{ url_for('main.manage_sectors') }}">Setores</a></li>
+                                <li><a class="dropdown-item" href="{{ url_for('main.manage_equipment') }}">Equipamentos</a></li>
+                            </ul>
+                        </li>
+                         <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('main.pending_checklists') }}">Checklists Pendentes</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('main.history') }}">Histórico</a>
+                        </li>
+                    {% endif %}
+                {% endif %}
+            </ul>
+            <ul class="navbar-nav">
+                 {% if current_user.is_authenticated %}
+                    <li class="nav-item">
+                         <span class="navbar-text me-3">
+                            Olá, {{ current_user.nome }}
+                         </span>
+                    </li>
+                     <li class="nav-item">
+                        <a href="{{ url_for('auth.logout') }}" class="btn btn-outline-danger">Sair</a>
+                    </li>
+                 {% endif %}
+            </ul>
+        </div>
+    </div>
+</nav>

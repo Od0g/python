@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <h1 class="h3 mb-4 text-gray-800">Gerenciar Usuários</h1>
+
+    <div class="row">
+        <div class="col-lg-5">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Adicionar Novo Usuário</h6>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="">
+                        {{ form.hidden_tag() }}
+                        <div class="mb-3">
+                            {{ form.nome.label(class="form-label") }}
+                            {{ form.nome(class="form-control") }}
+                        </div>
+                        <div class="mb-3">
+                            {{ form.email.label(class="form-label") }}
+                            {{ form.email(class="form-control") }}
+                        </div>
+                        <div class="mb-3">
+                            {{ form.senha.label(class="form-label") }}
+                            {{ form.senha(class="form-control") }}
+                        </div>
+                        <div class="mb-3">
+                            {{ form.confirm_senha.label(class="form-label") }}
+                            {{ form.confirm_senha(class="form-control") }}
+                        </div>
+                        <div class="mb-3">
+                            {{ form.cargo.label(class="form-label") }}
+                            {{ form.cargo(class="form-select") }}
+                        </div>
+                        <div class="mb-3">
+                            {{ form.setor.label(class="form-label") }}
+                            {{ form.setor(class="form-select") }}
+                        </div>
+                        <div class="d-grid">
+                            {{ form.submit(class="btn btn-primary") }}
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-7">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Usuários Cadastrados</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered" width="100%" cellspacing="0">
+                            <thead>
+                                <tr>
+                                    <th>Nome</th>
+                                    <th>E-mail</th>
+                                    <th>Cargo</th>
+                                    <th>Setor</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for user in users %}
+                                <tr>
+                                    <td>{{ user.nome }}</td>
+                                    <td>{{ user.email }}</td>
+                                    <td>{{ user.cargo.value }}</td>
+                                    <td>{{ user.setor.nome }}</td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="4" class="text-center">Nenhum usuário cadastrado.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

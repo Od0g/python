@@ -1,0 +1,15 @@
+/* style.css */
+
+/* Define uma proporção para a caixa de assinatura (largura / altura) */
+.signature-canvas-container {
+    width: 100%;
+    /* Proporção de 4 para 1. Mude se preferir mais alta ou mais baixa */
+    aspect-ratio: 4 / 1; 
+    border: 1px dashed #ccc;
+    background-color: #f8f9fa;
+}
+
+.signature-canvas-container canvas {
+    width: 100%;
+    height: 100%;
+}
