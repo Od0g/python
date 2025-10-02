@@ -13,3 +13,4 @@ pytest-flask
 pytest-cov
 gunicorn
 psycopg2-binary
+WeasyPrint
