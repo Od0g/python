@@ -1,3 +1,4 @@
+# routes.py
 from flask import render_template, request, redirect, url_for, flash, send_file, abort
 from app import app, db
 from models import (
@@ -17,6 +18,7 @@ import pandas as pd
 from datetime import datetime, timedelta
 import uuid
 import re
+import binascii
 
 # --- Rotas de Autenticação ---
 @app.route('/login', methods=['GET', 'POST'])
@@ -96,7 +98,6 @@ def admin_panel():
         return redirect(url_for('index'))
     return render_template('admin/admin.html')
 
-# Nova rota para cadastro de modelos de checklist
 @app.route('/admin/cadastrar_modelo', methods=['GET', 'POST'])
 @login_required
 def cadastrar_modelo():
@@ -109,12 +110,10 @@ def cadastrar_modelo():
             nome = request.form.get('nome')
             checklist_type = request.form.get('checklist_type')
             
-            # Cria o novo modelo de checklist
             novo_modelo = ChecklistTemplate(name=nome, checklist_type=checklist_type)
             db.session.add(novo_modelo)
             db.session.commit()
 
-            # Processa os itens (perguntas) enviados pelo formulário
             perguntas_text = request.form.getlist('pergunta[]')
             
             for i, pergunta_texto in enumerate(perguntas_text):
@@ -141,7 +140,6 @@ def cadastrar_modelo():
 
     return render_template('admin/cadastrar_modelo.html')
 
-# Rota para cadastrar setores
 @app.route('/admin/cadastrar_setor', methods=['GET', 'POST'])
 @login_required
 def cadastrar_setor():
@@ -162,7 +160,6 @@ def cadastrar_setor():
     return render_template('admin/cadastrar_setor.html', setores=setores)
 
 
-# Lógica de Geração Automática de Checklists na rota de cadastro de colaborador
 @app.route('/admin/cadastrar_colaborador', methods=['GET', 'POST'])
 @login_required
 def cadastrar_colaborador():
@@ -172,19 +169,16 @@ def cadastrar_colaborador():
 
     if request.method == 'POST':
         try:
-            # Dados do Colaborador
             nome = request.form.get('nome')
             cargo = request.form.get('cargo')
             matricula = request.form.get('matricula')
             setor_id = request.form.get('setor')
             
-            # Dados do Treinamento
             leader_id = request.form.get('leader')
             evaluator_id = request.form.get('evaluator')
             training_start_date_str = request.form.get('training_start_date')
             training_start_date = datetime.strptime(training_start_date_str, '%Y-%m-%d').date()
 
-            # Cria o colaborador
             novo_colaborador = Employee(
                 name=nome,
                 position=cargo,
@@ -195,7 +189,6 @@ def cadastrar_colaborador():
             db.session.add(novo_colaborador)
             db.session.commit()
             
-            # --- Lógica de Geração Automática dos Checklists ---
             diario_template = ChecklistTemplate.query.filter_by(checklist_type='diario').first()
             semanal_template = ChecklistTemplate.query.filter_by(checklist_type='semanal').first()
             
@@ -203,7 +196,6 @@ def cadastrar_colaborador():
                 flash('Modelos de checklist (Diário ou Semanal) não encontrados. Por favor, cadastre-os primeiro.', 'danger')
                 return redirect(url_for('cadastrar_colaborador'))
 
-            # Gerar 30 checklists diários
             for i in range(1, 31):
                 fill_date = training_start_date + timedelta(days=i-1)
                 novo_checklist_diario = ChecklistInstance(
@@ -219,7 +211,6 @@ def cadastrar_colaborador():
                 )
                 db.session.add(novo_checklist_diario)
             
-            # Gerar 4 checklists semanais
             for i in range(1, 5):
                 fill_date = training_start_date + timedelta(weeks=i-1)
                 novo_checklist_semanal = ChecklistInstance(
@@ -272,7 +263,6 @@ def selecionar_modelo():
         avaliadores=avaliadores
     )
 
-
 @app.route('/iniciar_preenchimento', methods=['POST'])
 @login_required
 def iniciar_preenchimento():
@@ -286,6 +276,7 @@ def iniciar_preenchimento():
         colaborador = Employee.query.get_or_404(colaborador_id)
         
         nova_instancia = ChecklistInstance(
+            checklist_number=str(uuid.uuid4()),
             template_id=modelo.id,
             employee_id=colaborador.id,
             leader_id=leader_id,
@@ -325,9 +316,9 @@ def preencher_checklist(instance_id):
         respostas = {r.item_id: r for r in ChecklistAnswer.query.filter_by(instance_id=checklist.id).all()}
         
         return render_template(
-            'preencher_checklist.html', 
-            checklist=checklist, 
-            perguntas=perguntas, 
+            'preencher_checklist.html',
+            checklist=checklist,
+            perguntas=perguntas,
             respostas=respostas
         )
 
@@ -354,20 +345,17 @@ def preencher_checklist(instance_id):
                     )
                     db.session.add(nova_resposta)
 
-            # Lógica para salvar as assinaturas
             assinatura_lider_data = request.form.get('assinatura_lider_data')
             if assinatura_lider_data and 'data:image' in assinatura_lider_data:
                 try:
                     header, encoded = assinatura_lider_data.split(",", 1)
-                    # Substitui caracteres inválidos do Base64 por válidos
-                    encoded = re.sub(r'[^a-zA-Z0-9+/=]', '', encoded)
                     missing_padding = len(encoded) % 4
                     if missing_padding:
                         encoded += '=' * (4 - missing_padding)
                     checklist.signature_leader_data = base64.b64decode(encoded)
                 except (ValueError, binascii.Error) as e:
                     flash(f"Erro ao decodificar a assinatura do Líder: {e}", 'danger')
-                    checklist.signature_leader_data = None          
+                    checklist.signature_leader_data = None
             else:
                 checklist.signature_leader_data = None
 
@@ -375,7 +363,6 @@ def preencher_checklist(instance_id):
             if assinatura_avaliador_data and 'data:image' in assinatura_avaliador_data:
                 try:
                     header, encoded = assinatura_avaliador_data.split(",", 1)
-                    encoded = re.sub(r'[^a-zA-Z0-9+/=]', '', encoded)
                     missing_padding = len(encoded) % 4
                     if missing_padding:
                         encoded += '=' * (4 - missing_padding)
@@ -390,7 +377,6 @@ def preencher_checklist(instance_id):
             if assinatura_colaborador_data and 'data:image' in assinatura_colaborador_data:
                 try:
                     header, encoded = assinatura_colaborador_data.split(",", 1)
-                    encoded = re.sub(r'[^a-zA-Z0-9+/=]', '', encoded)
                     missing_padding = len(encoded) % 4
                     if missing_padding:
                         encoded += '=' * (4 - missing_padding)
@@ -417,19 +403,30 @@ def preencher_checklist(instance_id):
 @login_required
 def ver_detalhes(instance_id):
     checklist = ChecklistInstance.query.get_or_404(instance_id)
-    return render_template('ver_detalhes.html', checklist=checklist)
+    perguntas = ChecklistItemTemplate.query.filter_by(template_id=checklist.template_id).all()
+    respostas = {r.item_id: r for r in ChecklistAnswer.query.filter_by(instance_id=checklist.id).all()}
+    return render_template(
+        'ver_detalhes.html',
+        checklist=checklist,
+        perguntas=perguntas,
+        respostas=respostas
+    )
 
 @app.route('/validar_checklist/<int:instance_id>', methods=['GET', 'POST'])
 @login_required
 def validar_checklist(instance_id):
     checklist = ChecklistInstance.query.get_or_404(instance_id)
 
-    # Verifica se o usuário logado tem o perfil de Coordenador
-    if current_user.role_obj.name not in ['Coordenador', 'Administrador']:
+    # Verifica se o checklist já foi validado
+    if checklist.status in ['Aprovado', 'Reprovado']:
+        flash('Este checklist já foi validado.', 'warning')
+        return redirect(url_for('ver_detalhes', instance_id=instance_id))
+
+    # Verifica se o usuário logado tem o perfil de Coordenação ou Administrador
+    if current_user.role_obj.name not in ['Coordenação', 'Administrador']:
         flash('Você não tem permissão para validar este checklist.', 'danger')
         return redirect(url_for('index'))
     
-    # Se a requisição for GET, exibe o formulário de validação
     if request.method == 'GET':
         perguntas = ChecklistItemTemplate.query.filter_by(template_id=checklist.template_id).all()
         respostas = {r.item_id: r for r in ChecklistAnswer.query.filter_by(instance_id=checklist.id).all()}
@@ -441,33 +438,29 @@ def validar_checklist(instance_id):
             respostas=respostas
         )
     
-    # Se a requisição for POST, processa o formulário de validação
     if request.method == 'POST':
         try:
             status_final = request.form.get('status_final')
             comentario_coordenador = request.form.get('comentario_coordenador')
-            assinatura_data = request.form.get('assinatura_coordenador_data')
             
-            # Garante que a assinatura foi fornecida
+            assinatura_data = request.form.get('assinatura_coordenador_data')
             if not assinatura_data or 'data:image' not in assinatura_data:
                 flash('Assinatura do coordenador é obrigatória para a validação.', 'danger')
                 return redirect(url_for('validar_checklist', instance_id=instance_id))
 
-            # Lógica para salvar a assinatura
-            encoded = assinatura_data.split(",", 1)[1]
+            header, encoded = assinatura_data.split(",", 1)
             missing_padding = len(encoded) % 4
             if missing_padding:
                 encoded += '=' * (4 - missing_padding)
             
-            # Atualiza o status do checklist
+            checklist.signature_coordinator_data = base64.b64decode(encoded)
+            checklist.coordinator_comment = comentario_coordenador
             checklist.status = status_final
             
-            # Adiciona a validação no log (se necessário, você pode criar uma tabela para isso)
-            # Por enquanto, vamos apenas atualizar o status
-            
             db.session.commit()
+
             flash(f'Checklist validado com sucesso! Status final: {status_final}.', 'success')
-            return redirect(url_for('index'))
+            return redirect(url_for('ver_detalhes', instance_id=instance_id))
 
         except Exception as e:
             db.session.rollback()
@@ -481,16 +474,45 @@ def gerar_pdf(instance_id):
     buffer = BytesIO()
     c = canvas.Canvas(buffer, pagesize=letter)
     width, height = letter
+    y = height - 50
 
-    # Lógica de geração de PDF com os novos campos e assinaturas
-    c.drawString(100, height - 50, f"Checklist ID: {checklist.id}")
-    c.drawString(100, height - 70, f"Modelo: {checklist.template.name}")
-    c.drawString(100, height - 90, f"Colaborador: {checklist.employee.name}")
-    c.drawString(100, height - 110, f"Líder: {checklist.leader.username}")
-    c.drawString(100, height - 130, f"Avaliador: {checklist.evaluator.username}")
-    c.drawString(100, height - 150, f"Status: {checklist.status}")
+    c.setFont('Helvetica-Bold', 14)
+    c.drawString(100, y, f"Checklist ID: {checklist.id}")
+    y -= 20
+    c.setFont('Helvetica', 12)
+    c.drawString(100, y, f"Modelo: {checklist.template.name}")
+    y -= 20
+    c.drawString(100, y, f"Colaborador: {checklist.employee.name}")
+    y -= 20
+    c.drawString(100, y, f"Líder: {checklist.leader.username}")
+    y -= 20
+    c.drawString(100, y, f"Avaliador: {checklist.evaluator.username}")
+    y -= 20
+    c.drawString(100, y, f"Status: {checklist.status}")
+    y -= 30
+
+    c.setFont('Helvetica-Bold', 12)
+    c.drawString(100, y, "Detalhes do Preenchimento:")
+    y -= 20
     
-    # ... (adicionar lógica para exibir as perguntas e respostas)
+    c.setFont('Helvetica', 10)
+    for item in checklist.template.items:
+        resposta = ChecklistAnswer.query.filter_by(
+            instance_id=checklist.id,
+            item_id=item.id
+        ).first()
+        
+        if y < 100:
+            c.showPage()
+            y = height - 50
+        
+        c.drawString(110, y, f"Pergunta: {item.question_text}")
+        y -= 15
+        if resposta:
+            c.drawString(120, y, f"Resposta: {resposta.answer}")
+            y -= 15
+            c.drawString(120, y, f"Comentário: {resposta.comment}")
+            y -= 25
 
     c.save()
     buffer.seek(0)
@@ -499,9 +521,36 @@ def gerar_pdf(instance_id):
 @app.route('/gerar_excel/<int:instance_id>')
 @login_required
 def gerar_excel(instance_id):
-    pass
+    checklist = ChecklistInstance.query.get_or_404(instance_id)
 
-@app.route('/enviar_email/<int:instance_id>')
-@login_required
-def enviar_email(instance_id):
-    pass
+    data = []
+    for item in checklist.template.items:
+        resposta = ChecklistAnswer.query.filter_by(
+            instance_id=checklist.id,
+            item_id=item.id
+        ).first()
+
+        data.append({
+            "Checklist ID": checklist.id,
+            "Colaborador": checklist.employee.name,
+            "Modelo": checklist.template.name,
+            "Data de Preenchimento": checklist.fill_date,
+            "Pergunta": item.question_text,
+            "Resposta": resposta.answer if resposta else "N/A",
+            "Comentário": resposta.comment if resposta else "N/A",
+            "Status": checklist.status
+        })
+
+    df = pd.DataFrame(data)
+    output = BytesIO()
+    writer = pd.ExcelWriter(output, engine='xlsxwriter')
+    df.to_excel(writer, index=False, sheet_name='Checklist')
+    writer.close()
+    output.seek(0)
+
+    return send_file(
+        output,
+        as_attachment=True,
+        download_name=f'checklist_{checklist.id}.xlsx',
+        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )

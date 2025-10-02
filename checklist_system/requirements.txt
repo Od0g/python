@@ -8,3 +8,8 @@ Flask-Bcrypt==1.0.1
 qrcode[pil]==7.4.2
 python-dotenv==1.0.1
 email-validator==2.1.1
+pytest
+pytest-flask
+pytest-cov
+gunicorn
+psycopg2-binary

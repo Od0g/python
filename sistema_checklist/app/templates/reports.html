@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Relatórios{% endblock %}
+{% block content %}
+<h2>Relatório de Checklists</h2>
+<div class="card">
+    <div class="card-body">
+        <h5 class="card-title">Filtros</h5>
+        <form id="filters-form" class="row g-3 align-items-end">
+            <div class="col-md-3">
+                <label for="start_date" class="form-label">Data Início</label>
+                <input type="date" class="form-control" id="start_date">
+            </div>
+            <div class="col-md-3">
+                <label for="end_date" class="form-label">Data Fim</label>
+                <input type="date" class="form-control" id="end_date">
+            </div>
+            <div class="col-md-3">
+                <label for="sector_id" class="form-label">Setor</label>
+                <select id="sector_id" class="form-select">
+                    <option value="">Todos</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <button type="submit" class="btn btn-primary w-100">Gerar Relatório</button>
+            </div>
+        </form>
+        <hr>
+        <div id="export-buttons" class="d-none">
+            <button id="export-csv" class="btn btn-success">Exportar para CSV</button>
+            <button id="export-xlsx" class="btn btn-success">Exportar para Excel</button>
+        </div>
+    </div>
+</div>
+
+<div class="mt-4">
+    <h4>Resultados</h4>
+    <div id="results-container" class="table-responsive">
+        </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="/static/js/reports.js"></script>
+{% endblock %}

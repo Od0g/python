@@ -4,6 +4,11 @@ from fastapi import Depends # Adicione Depends aqui
 from . import models, schemas, security
 from .database import get_db # Adicione get_db aqui
 from .exceptions import credentials_exception
+from . import notifications # Importe o novo serviço
+from datetime import datetime # Adicione esta importação
+
+
+
 
 def get_user_by_username(db: Session, username: str):
     """Busca um usuário pelo seu nome de usuário."""
@@ -102,3 +107,65 @@ def create_checklist(db: Session, checklist: schemas.ChecklistCreate, collaborat
     # 5. Refresca o objeto para carregar os relacionamentos
     db.refresh(db_checklist)
     return db_checklist
+
+def get_checklist_by_id(db: Session, checklist_id: int):
+    return db.query(models.Checklist).filter(models.Checklist.id == checklist_id).first()
+
+def get_pending_checklists_for_manager(db: Session, manager_id: int):
+    """
+    Busca checklists concluídos (pendentes de validação) nos setores
+    gerenciados por este gestor.
+    """
+    return db.query(models.Checklist)\
+             .join(models.Equipment)\
+             .join(models.Sector)\
+             .filter(models.Sector.manager_id == manager_id,
+                     models.Checklist.status == models.ChecklistStatus.concluido)\
+             .all()
+
+def validate_checklist(db: Session, db_checklist: models.Checklist, manager_id: int, signature: str):
+    """
+    Atualiza um checklist para o status 'VALIDADO', registrando o gestor e a assinatura.
+    """
+    db_checklist.status = models.ChecklistStatus.validado
+    db_checklist.manager_id = manager_id
+    db_checklist.manager_signature = signature
+    db_checklist.validated_at = func.now() # Importe 'func' de 'sqlalchemy.sql'
+
+    db.commit()
+    db.refresh(db_checklist)
+    return db_checklist
+
+def create_checklist(db: Session, checklist: schemas.ChecklistCreate, collaborator_id: int):
+    # ... (código existente para criar e salvar o checklist e respostas) ...
+    db.commit()
+    db.refresh(db_checklist)
+
+    # --- LÓGICA DE NOTIFICAÇÃO ---
+    # Após o commit, buscamos os dados necessários para notificar
+    manager = db_checklist.equipment.sector.manager
+    if manager and manager.email:
+        # Nota: Em produção, isso deveria ser uma tarefa em background (ex: Celery)
+        # para não bloquear a resposta da API.
+        notifications.send_validation_notification_email(manager=manager, checklist=db_checklist)
+
+    return db_checklist
+
+def get_filtered_checklists(db: Session, start_date: datetime = None, end_date: datetime = None, sector_id: int = None, equipment_id: int = None):
+    """
+    Busca checklists com base em múltiplos filtros opcionais.
+    """
+    query = db.query(models.Checklist)
+
+    if start_date:
+        query = query.filter(models.Checklist.created_at >= start_date)
+    if end_date:
+        query = query.filter(models.Checklist.created_at <= end_date)
+
+    if equipment_id:
+        query = query.filter(models.Checklist.equipment_id == equipment_id)
+    elif sector_id:
+        # Se filtrou por setor mas não por equipamento, junta as tabelas para filtrar
+        query = query.join(models.Equipment).filter(models.Equipment.sector_id == sector_id)
+
+    return query.order_by(models.Checklist.created_at.desc()).all()

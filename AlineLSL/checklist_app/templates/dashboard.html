@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Dashboard Gerencial Completo</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0; padding: 20px;
+      background: #f0f2f5;
+      color: #222;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    .dashboard {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .controls {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      margin-bottom: 30px;
+      flex-wrap: wrap;
+    }
+    select, button {
+      padding: 8px 15px;
+      font-size: 1rem;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      cursor: pointer;
+      background: white;
+      transition: background-color 0.3s ease;
+    }
+    select:hover, button:hover {
+      background-color: #eee;
+    }
+    .cards {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      justify-content: center;
+    }
+    .card {
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+      padding: 20px;
+      flex: 1 1 380px;
+      max-width: 600px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .card.large {
+      max-width: 1000px;
+      flex-basis: 100%;
+    }
+    .card h2 {
+      margin-top: 0;
+      margin-bottom: 15px;
+      color: #34495e;
+    }
+    .metrics p {
+      width: 100%;
+      margin: 6px 0;
+      font-size: 1.1rem;
+      color: #444;
+    }
+    canvas {
+      width: 100% !important;
+      max-height: 350px;
+    }
+    @media (max-width: 600px) {
+      .card {
+        flex-basis: 100%;
+        max-width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Dashboard Gerencial Completo</h1>
+
+  <div class="dashboard">
+    <!-- Controles -->
+    <div class="controls">
+      <select id="statusFilter">
+        <option value="all">Todos os Status</option>
+        <option value="aprovados">Aprovados</option>
+        <option value="reprovados">Reprovados</option>
+        <option value="concluidos">Concluídos</option>
+        <option value="emAndamento">Em Andamento</option>
+      </select>
+      <button id="refreshBtn">Atualizar Dados</button>
+    </div>
+
+    <!-- Cards -->
+    <div class="cards">
+      <!-- Doughnut -->
+      <section class="card">
+        <h2>Status dos Checklists</h2>
+        <canvas id="statusChart"></canvas>
+      </section>
+
+      <!-- Métricas Gerais -->
+      <section class="card metrics">
+        <h2>Métricas Gerais</h2>
+        <p><strong>Total de Checklists:</strong> <span id="totalChecklists">0</span></p>
+        <p><strong>Concluídos:</strong> <span id="concluidos">0</span></p>
+        <p><strong>Em Andamento:</strong> <span id="emAndamento">0</span></p>
+        <p><strong>Aprovados:</strong> <span id="aprovados">0</span></p>
+        <p><strong>Reprovados:</strong> <span id="reprovados">0</span></p>
+        <p><strong>Taxa de Aprovação:</strong> <span id="taxaAprovacao">0.00%</span></p>
+      </section>
+
+      <!-- Gráfico de Barras -->
+      <section class="card large">
+        <h2>Checklists por Dia (última semana)</h2>
+        <canvas id="barChart"></canvas>
+      </section>
+
+      <!-- Gráfico de Linha -->
+      <section class="card large">
+        <h2>Evolução da Taxa de Aprovação (últimos 7 dias)</h2>
+        <canvas id="lineChart"></canvas>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    // Dados iniciais (simulados - substitua pelos seus dados do backend)
+    let dashboardData = {
+      total_checklists: 100,
+      aprovados: 50,
+      reprovados: 20,
+      concluidos: 70,
+      em_andamento: 30,
+      checklist_por_dia: {
+        labels: ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'],
+        concluidos: [10, 12, 9, 11, 14, 8, 6],
+        emAndamento: [5, 3, 4, 2, 5, 3, 1]
+      },
+      taxa_aprovacao_dias: {
+        labels: ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'],
+        taxas: [45, 50, 52, 48, 55, 50, 53] // %
+      }
+    };
+
+    // Atualizar métricas da tela
+    function updateMetrics(data) {
+      document.getElementById('totalChecklists').textContent = data.total_checklists;
+      document.getElementById('aprovados').textContent = data.aprovados;
+      document.getElementById('reprovados').textContent = data.reprovados;
+      document.getElementById('concluidos').textContent = data.concluidos;
+      document.getElementById('emAndamento').textContent = data.em_andamento;
+      const taxa = data.total_checklists > 0 ? ((data.aprovados / data.total_checklists) * 100).toFixed(2) : '0.00';
+      document.getElementById('taxaAprovacao').textContent = taxa + '%';
+    }
+
+    // Criar gráfico doughnut
+    function createStatusChart(ctx, data) {
+      return new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: ['Aprovados', 'Reprovados', 'Concluídos', 'Em Andamento'],
+          datasets: [{
+            data: [data.aprovados, data.reprovados, data.concluidos, data.em_andamento],
+            backgroundColor: ['#2ecc71', '#e74c3c', '#3498db', '#f1c40f'],
+            borderColor: '#fff',
+            borderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { position: 'top' },
+            tooltip: {
+              callbacks: {
+                label: ctx => {
+                  const label = ctx.label || '';
+                  const value = ctx.parsed || 0;
+                  const total = data.total_checklists || 1;
+                  const percent = ((value / total) * 100).toFixed(2);
+                  return `${label}: ${value} (${percent}%)`;
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // Criar gráfico barras
+    function createBarChart(ctx, labels, concluidos, emAndamento) {
+      return new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [
+            {
+              label: 'Concluídos',
+              data: concluidos,
+              backgroundColor: '#3498db'
+            },
+            {
+              label: 'Em Andamento',
+              data: emAndamento,
+              backgroundColor: '#f1c40f'
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: { stepSize: 1 }
+            }
+          },
+          plugins: { legend: { position: 'top' } }
+        }
+      });
+    }
+
+    // Criar gráfico linha
+    function createLineChart(ctx, labels, taxas) {
+      return new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Taxa de Aprovação (%)',
+            data: taxas,
+            borderColor: '#2ecc71',
+            backgroundColor: 'rgba(46, 204, 113, 0.2)',
+            fill: true,
+            tension: 0.3,
+            pointRadius: 5,
+            pointHoverRadius: 7
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            y: {
+              min: 0,
+              max: 100,
+              ticks: { stepSize: 10 },
+              title: {
+                display: true,
+                text: 'Porcentagem (%)'
+              }
+            }
+          },
+          plugins: {
+            legend: { position: 'top' },
+            tooltip: {
+              callbacks: {
+                label: ctx => ctx.parsed.y + '%'
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // Inicialização dos gráficos e métricas
+    const ctxStatus = document.getElementById('statusChart').getContext('2d');
+    const ctxBar = document.getElementById('barChart').getContext('2d');
+    const ctxLine = document.getElementById('lineChart').getContext('2d');
+
+    let statusChart = createStatusChart(ctxStatus, dashboardData);
+    let barChart = createBarChart(
+      ctxBar,
+      dashboardData.checklist_por_dia.labels,
+      dashboardData.checklist_por_dia.concluidos,
+      dashboardData.checklist_por_dia.emAndamento
+    );
+    let lineChart = createLineChart(
+      ctxLine,
+      dashboardData.taxa_aprovacao_dias.labels,
+      dashboardData.taxa_aprovacao_dias.taxas
+    );
+
+    updateMetrics(dashboardData);
+
+    // Filtrar dados por status
+    document.getElementById('statusFilter').addEventListener('change', e => {
+      const filter = e.target.value;
+
+      // Se "all", volta ao original
+      if (filter === 'all') {
+        statusChart.data.datasets[0].data = [
+          dashboardData.aprovados,
+          dashboardData.reprovados,
+          dashboardData.concluidos,
+          dashboardData.em_andamento
+        ];
+        statusChart.update();
+        return;
+      }
+
+      // Exibe só um status no doughnut
+      const zero = 0;
+      const newData = [zero, zero, zero, zero];
+      const map = {
+        aprovados: 0,
+        reprovados: 1,
+        concluidos: 2,
+        emAndamento: 3
+      };
+
+      newData[map[filter]] = dashboardData[filter];
+      statusChart.data.datasets[0].data = newData;
+      statusChart.update();
+    });
+
+    // Botão simulado para atualizar dados (aqui só reatribui os mesmos dados)
+    document.getElementById('refreshBtn').addEventListener('click', () => {
+      alert('Atualizando dados... (Simulado)');
+      // Aqui você pode adicionar chamada fetch/ajax para buscar novos dados do backend
+      // Por enquanto, apenas reatualiza métricas e gráficos com os mesmos dados:
+      updateMetrics(dashboardData);
+      statusChart.data.datasets[0].data = [
+        dashboardData.aprovados,
+        dashboardData.reprovados,
+        dashboardData.concluidos,
+        dashboardData.em_andamento
+      ];
+      statusChart.update();
+    });
+  </script>
+
+</body>
+</html>

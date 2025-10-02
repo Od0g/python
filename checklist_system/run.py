@@ -42,6 +42,36 @@ def create_admin():
     db.session.commit()
     print(f"Usuário Coordenador '{nome}' criado com sucesso!")
 
+@app.cli.command("seed")
+def seed():
+    """Cria usuários e dados iniciais no banco de dados."""
+    admin_email = os.environ.get('ADMIN_EMAIL', 'admin@example.com')
+    admin_password = os.environ.get('ADMIN_PASSWORD', 'password')
+    admin_nome = os.environ.get('ADMIN_NAME', 'Admin User')
+
+    # Verifica se o setor 'Administrativo' existe, se não, cria
+    setor = Sector.query.filter_by(nome='Administrativo').first()
+    if not setor:
+        setor = Sector(nome='Administrativo')
+        db.session.add(setor)
+        db.session.commit()
+        print("Setor 'Administrativo' criado.")
+
+    # Verifica se o admin já existe
+    if User.query.filter_by(email=admin_email).first():
+        print(f"Usuário admin '{admin_email}' já existe.")
+    else:
+        admin = User(
+            email=admin_email,
+            nome=admin_nome,
+            cargo=UserRoles.COORDENADOR,
+            setor_id=setor.id
+        )
+        admin.set_password(admin_password)
+        db.session.add(admin)
+        db.session.commit()
+        print(f"Usuário admin '{admin_email}' criado com sucesso.")
+
 
 if __name__ == '__main__':
     app.run()

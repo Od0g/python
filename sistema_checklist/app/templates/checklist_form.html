@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title %}Preencher Checklist{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h2 id="equipment-name">Carregando dados do equipamento...</h2>
+        <p class="mb-0" id="equipment-details"></p>
+    </div>
+    <div class="card-body">
+        <form id="checklist-form">
+            <div id="questions-container">
+                </div>
+
+            <hr>
+
+            <h4>Assinatura do Colaborador</h4>
+            <div class="border bg-light">
+                <canvas id="signature-pad" class="w-100" height="200"></canvas>
+            </div>
+            <button type="button" id="clear-signature" class="btn btn-secondary mt-2">Limpar</button>
+
+            <hr>
+
+            <div id="form-feedback" class="mt-3"></div>
+            <div class="d-grid">
+                <button type="submit" class="btn btn-success btn-lg">Enviar Checklist</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
+<script src="/static/js/checklist_form.js"></script>
+{% endblock %}

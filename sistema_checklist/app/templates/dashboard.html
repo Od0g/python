@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="p-5 mb-4 bg-light rounded-3">
+    <div class="container-fluid py-5">
+        <h1 class="display-5 fw-bold" id="welcome-message">Carregando...</h1>
+        <p class="col-md-8 fs-4" id="role-message"></p>
+    </div>
+</div>
+
+<div id="collaborator-section" class="d-none">
+    <h2>Ações do Colaborador</h2>
+    <a href="/scan" class="btn btn-primary btn-lg">Escanear QR Code de Equipamento</a>
+</div>
+
+<div id="manager-section" class="d-none">
+    <h2>Ações do Gestor</h2>
+    <h3>Checklists Pendentes de Validação</h3>
+    <div id="pending-checklists-list" class="list-group">
+        </div>
+</div>
+    <div id="collaborator-section" class="d-none">
+        </div>
+
+    <div id="manager-section" class="d-none">
+        </div>
+
+    <div id="admin-section" class="d-none mt-4">
+        <div class="card">
+            <div class="card-header">
+                <h3>Painel do Administrador</h3>
+            </div>
+            <div class="card-body">
+                <p>Gerencie os cadastros centrais do sistema.</p>
+                <a href="/admin/users" class="btn btn-danger">Gerenciar Usuários</a>
+                <a href="/admin/sectors" class="btn btn-warning">Gerenciar Setores</a>
+                <a href="/admin/equipments" class="btn btn-info">Gerenciar Equipamentos</a>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/dashboard.js"></script>
+{% endblock %}

@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Selecionar Checklist{% endblock %}
+{% block content %}
+<h2>Selecione o Checklist para o Ativo {{ ativo.codigo }}</h2>
+<p>Modelos de checklist disponíveis para o tipo de ativo "{{ ativo.tipo_ativo.nome }}":</p>
+<div class="list-group">
+    {% for modelo in modelos %}
+    <a href="{{ url_for('checklist', ativo_id=ativo.id, modelo_id=modelo.id) }}" class="list-group-item list-group-item-action">
+        <h5>{{ modelo.nome }}</h5>
+        <p class="mb-1">{{ modelo.descricao }}</p>
+    </a>
+    {% endfor %}
+</div>
+{% endblock %}

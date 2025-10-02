@@ -1,3 +1,6 @@
+from fastapi import Depends, HTTPException, status # Adicione status
+from . import crud, models # Adicione models
+from .models import UserRole # Adicione UserRole
 from datetime import datetime, timedelta
 from typing import Optional
 from jose import JWTError, jwt
@@ -34,4 +37,17 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
-    
+
+# NOVA FUNÇÃO
+def require_role(allowed_roles: list[UserRole]):
+    """
+    Fábrica de dependências que cria uma dependência para verificar o perfil do usuário.
+    """
+    def get_current_user_with_role(current_user: models.User = Depends(crud.get_current_active_user)):
+        if current_user.role not in allowed_roles:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="O usuário não tem permissão para executar esta ação."
+            )
+        return current_user
+    return get_current_user_with_role

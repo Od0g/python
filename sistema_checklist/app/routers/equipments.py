@@ -41,3 +41,14 @@ def generate_equipment_qr_code(equipment_id: int, db: Session = Depends(get_db))
     qr_bytes = buf.getvalue()
 
     return Response(content=qr_bytes, media_type="image/png")
+
+# NOVO ENDPOINT
+@router.get("/by_identifier/{identifier}", response_model=schemas.Equipment)
+def read_equipment_by_identifier(identifier: str, db: Session = Depends(get_db)):
+    """
+    Busca um equipamento pelo seu QR Code Identifier (UUID).
+    """
+    db_equipment = db.query(models.Equipment).filter(models.Equipment.qr_code_identifier == identifier).first()
+    if not db_equipment:
+        raise HTTPException(status_code=404, detail="Equipamento não encontrado com este identificador.")
+    return db_equipment

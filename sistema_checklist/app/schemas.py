@@ -105,3 +105,6 @@ class Checklist(ChecklistBase):
 
     class Config:
         from_attributes = True
+
+class ChecklistValidate(BaseModel):
+    manager_signature: str

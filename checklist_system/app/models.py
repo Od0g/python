@@ -1,5 +1,6 @@
 from app import db, login_manager, bcrypt
 from flask_login import UserMixin
+from datetime import timezone
 # Não precisamos mais destes imports específicos de JSON
 # from sqlalchemy.dialects.sqlite import JSON as SQLITE_JSON
 # from sqlalchemy.dialects.postgresql import JSONB
@@ -18,7 +19,7 @@ class UserRoles(enum.Enum):
 
 @login_manager.user_loader
 def load_user(user_id):
-    return User.query.get(int(user_id))
+    return db.session.get(User, int(user_id))
 
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
@@ -34,6 +35,10 @@ class User(db.Model, UserMixin):
 
     def check_password(self, password):
         return bcrypt.check_password_hash(self.senha_hash, password)
+
+        # ADICIONE ESTE MÉTODO AQUI
+    def __repr__(self):
+        return f'<User: {self.email}>'
 
 class Sector(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -66,7 +71,7 @@ class Checklist(db.Model):
     equipamento_id = db.Column(db.Integer, db.ForeignKey('equipment.id'), nullable=False)
     colaborador_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     gestor_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
-    data = db.Column(db.DateTime, index=True, default=datetime.utcnow)
+    data = db.Column(db.DateTime, index=True, default=lambda: datetime.now(timezone.utc))
     
     # MUDANÇA CRUCIAL AQUI: Usando o tipo JSON padrão do SQLAlchemy
     respostas = db.Column(db.JSON, nullable=False)
@@ -84,5 +89,5 @@ class Alert(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     checklist_id = db.Column(db.Integer, db.ForeignKey('checklist.id'), nullable=False)
     enviado_para = db.Column(db.String(255), nullable=False)
-    data_envio = db.Column(db.DateTime, default=datetime.utcnow)
+    data_envio = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     checklist = db.relationship('Checklist', backref='alerts')

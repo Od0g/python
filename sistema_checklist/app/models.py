@@ -34,11 +34,11 @@ class User(Base):
     full_name = Column(String(100), nullable=False)
     email = Column(String(100), unique=True, nullable=False, index=True)
     role = Column(SQLAlchemyEnum(UserRole), nullable=False)
-    sector_id = Column(Integer, ForeignKey('sectors.id'), nullable=True)
+    sector_id = Column(Integer, ForeignKey('sectors.id'), nullable=True) # A chave estrangeira está aqui
     is_active = Column(Boolean, default=True)
 
     # Relacionamento com Setor (será definido abaixo)
-    sector = relationship("Sector", back_populates="users")
+    sector = relationship("Sector", back_populates="users", foreign_keys=[sector_id])
 
 class Sector(Base):
     __tablename__ = 'sectors'
@@ -46,11 +46,15 @@ class Sector(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(100), unique=True, nullable=False)
     
-    # Um setor pode ter vários usuários (colaboradores/gestores)
-    users = relationship("User", back_populates="sector")
+    # ===== CORREÇÃO AQUI =====
+    # We need to be explicit about how a Sector finds its Users.
+    # It finds them by looking at the 'sector_id' column in the User table.
+    users = relationship("User", back_populates="sector", foreign_keys="[User.sector_id]")
     
-    # Um setor pode ter um gestor principal (opcional)
+    # A chave estrangeira está aqui
     manager_id = Column(Integer, ForeignKey('users.id'), nullable=True)
+
+    # CORREÇÃO AQUI: Diga ao relationship qual chave estrangeira usar
     manager = relationship("User", foreign_keys=[manager_id])
 
 class Equipment(Base):

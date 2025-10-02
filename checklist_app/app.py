@@ -1,57 +1,48 @@
-# checklist_app/app.py
-
-from flask import Flask, redirect, url_for, flash, session
+from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
-from flask_bcrypt import Bcrypt
-from flask_login import LoginManager, current_user
+from flask_login import LoginManager
 from config import Config
 
+# Inicialização das extensões (ainda não vinculadas a um app específico)
 db = SQLAlchemy()
 migrate = Migrate()
-bcrypt = Bcrypt()
-login_manager = LoginManager()
+login = LoginManager()
+# Define a view de login. Se um usuário não logado tentar acessar uma página protegida,
+# o Flask-Login o redirecionará para esta rota.
+login.login_view = 'auth.login' 
+login.login_message = 'Por favor, faça login para acessar esta página.'
 
 def create_app(config_class=Config):
+    """
+    Função Factory para criar a instância da aplicação Flask.
+    """
     app = Flask(__name__)
     app.config.from_object(config_class)
 
+    # Vincula as extensões à instância da aplicação
     db.init_app(app)
     migrate.init_app(app, db)
-    bcrypt.init_app(app)
-    login_manager.init_app(app)
-    login_manager.login_view = 'auth.login'
-    login_manager.login_message_category = 'info'
+    login.init_app(app)
 
-    import models
+    # Registro de Blueprints (serão criados depois para organizar as rotas)
+    # Exemplo:
+    # from app.auth import bp as auth_bp
+    # app.register_blueprint(auth_bp, url_prefix='/auth')
 
-    from blueprints.auth import auth as auth_blueprint
-    from blueprints.admin import admin as admin_blueprint
-    from blueprints.main import main as main_blueprint
-    from blueprints.checklists import checklists as checklists_blueprint
-    
-    app.register_blueprint(auth_blueprint)
-    app.register_blueprint(admin_blueprint, url_prefix='/admin')
-    app.register_blueprint(main_blueprint)
-    app.register_blueprint(checklists_blueprint)
-
-    @app.route('/')
-    def index():
-        print(f"DEBUG: current_user.is_authenticated: {current_user.is_authenticated}")
-        print(f"DEBUG: Session keys: {list(session.keys())}")
-        if current_user.is_authenticated:
-            return redirect(url_for('main.dashboard'))
-        return redirect(url_for('auth.login'))
-
-    # Rota temporária para limpar a sessão
-    @app.route('/limpar_sessao')
-    def limpar_sessao():
-        session.clear()
-        flash("Sessão limpa com sucesso!", "success")
-        return redirect(url_for('auth.login'))
+    # Rota de teste inicial
+    @app.route('/test')
+    def test_page():
+        return '<h1>Configuração inicial funcionando!</h1>'
 
     return app
 
-if __name__ == '__main__':
-    app = create_app()
-    app.run(debug=True)
+# Importa os models para que o Flask-Migrate possa encontrá-los.
+# É importante importar depois da inicialização do 'db'.
+from models import Usuario # Este import dará erro agora, mas funcionará no próximo bloco.
+
+# O user_loader é necessário para o Flask-Login. Ele carrega um usuário a partir do ID
+# armazenado na sessão.
+@login.user_loader
+def load_user(id):
+    return Usuario.query.get(int(id))

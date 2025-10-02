@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block title %}Validar Checklist{% endblock %}
+
+{% block content %}
+<a href="/" class="btn btn-secondary mb-3">← Voltar para o Dashboard</a>
+<div class="card">
+    <div class="card-header">
+        <h2>Revisão e Validação de Checklist</h2>
+    </div>
+    <div class="card-body">
+        <div id="loading-state">
+            <p class="text-center">Carregando dados do checklist...</p>
+        </div>
+
+        <div id="checklist-content" class="d-none">
+            <h4>Informações Gerais</h4>
+            <table class="table table-bordered mb-4">
+                <tr>
+                    <th style="width: 25%;">Equipamento</th>
+                    <td id="info-equipment"></td>
+                </tr>
+                <tr>
+                    <th>Setor / Local</th>
+                    <td id="info-location"></td>
+                </tr>
+                <tr>
+                    <th>Preenchido por</th>
+                    <td id="info-collaborator"></td>
+                </tr>
+                <tr>
+                    <th>Data da Submissão</th>
+                    <td id="info-date"></td>
+                </tr>
+            </table>
+
+            <h4 class="mt-4">Respostas do Checklist</h4>
+            <div id="responses-container" class="mb-4">
+                </div>
+
+            <h4 class="mt-4">Assinatura do Colaborador</h4>
+            <div class="border p-2 text-center bg-light">
+                <img id="collaborator-signature" src="" alt="Assinatura do Colaborador" style="max-width: 100%; height: auto;">
+            </div>
+
+            <hr class="my-4">
+            <form id="validation-form">
+                <h4>Assinatura do Gestor</h4>
+                <p class="text-muted">Aponha sua assinatura para validar este checklist.</p>
+                <div class="border bg-white">
+                    <canvas id="manager-signature-pad" class="w-100" height="200"></canvas>
+                </div>
+                <button type="button" id="clear-signature" class="btn btn-secondary mt-2">Limpar</button>
+
+                <div id="form-feedback" class="mt-3"></div>
+                <div class="d-grid mt-3">
+                    <button type="submit" class="btn btn-success btn-lg">Aprovar e Validar Checklist</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
+<script src="/static/js/validation_form.js"></script>
+{% endblock %}

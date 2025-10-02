@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Modelos de Checklist{% endblock %}
+{% block content %}
+<h2>Gerenciar Modelos de Checklist (Tipos de Ativo)</h2>
+
+<div class="row">
+    <div class="col-md-4">
+        <h4>Criar Novo Modelo</h4>
+        <form method="POST" action="{{ url_for('gerenciar_tipos_ativo') }}">
+            <input type="text" name="nome_tipo" class="form-control mb-2" placeholder="Ex: Tablet Samsung A7" required>
+            <button type="submit" class="btn btn-primary">Criar Modelo</button>
+        </form>
+    </div>
+    <div class="col-md-8">
+        <h4>Modelos Existentes</h4>
+        {% for tipo in tipos_ativo %}
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5>{{ tipo.nome }}</h5>
+            </div>
+            <div class="card-body">
+                <h6>Itens do Checklist:</h6>
+                <ul>
+                    {% for item in tipo.itens %}
+                    <li>{{ item.descricao }}</li>
+                    {% else %}
+                    <li>Nenhum item cadastrado.</li>
+                    {% endfor %}
+                </ul>
+                <hr>
+                <form method="POST" action="{{ url_for('adicionar_item_checklist', tipo_id=tipo.id) }}" class="row g-3">
+                    <div class="col-auto">
+                        <input type="text" name="descricao_item" class="form-control" placeholder="Descrição do novo item" required>
+                    </div>
+                    <div class="col-auto">
+                        <button type="submit" class="btn btn-success btn-sm">Adicionar Item</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

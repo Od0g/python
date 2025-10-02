@@ -50,25 +50,25 @@
                         <th>Ações</th>
                     </tr>
                 </thead>
-                <tbody>
-                    {% for checklist in checklists %}
-                        <tr>
-                            <td>{{ checklist.id }}</td>
-                            <td>{{ checklist.template.name }}</td>
-                            <td>{{ checklist.evaluator.username }}</td>
-                            <td>{{ checklist.current_status }}</td>
-                            <td>
-                                {% if checklist.current_status == 'Em Andamento' and checklist.evaluator_id == current_user.id %}
-                                    <a href="{{ url_for('preencher_checklist', instance_id=checklist.id) }}" class="button small">Preencher</a>
-                                {% elif checklist.current_status == 'Concluído' %}
-                                    <a href="{{ url_for('validar_checklist', instance_id=checklist.id) }}" class="button small">Validar</a>
-                                {% else %}
-                                    <a href="{{ url_for('ver_detalhes', instance_id=checklist.id) }}" class="button small">Ver Detalhes</a>
-                                {% endif %}
-                            </td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
+                    <tbody>
+                        {% for checklist in checklists %}
+                            <tr>
+                                <td>{{ checklist.id }}</td>
+                                <td>{{ checklist.template.name }}</td>
+                                <td>{{ checklist.evaluator.username }}</td>
+                                <td>{{ checklist.status }}</td>
+                                <td>
+                                    {% if checklist.status == 'Em Andamento' and checklist.evaluator_id == current_user.id %}
+                                        <a href="{{ url_for('preencher_checklist', instance_id=checklist.id) }}" class="button small">Preencher</a>
+                                    {% elif checklist.status == 'Concluído' and current_user.role_obj.name in ['Coordenação', 'Administrador'] %}
+                                        <a href="{{ url_for('validar_checklist', instance_id=checklist.id) }}" class="button small">Validar</a>
+                                    {% else %}
+                                        <a href="{{ url_for('ver_detalhes', instance_id=checklist.id) }}" class="button small">Ver Detalhes</a>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
             </table>
         {% else %}
             <p>Nenhum checklist encontrado.</p>

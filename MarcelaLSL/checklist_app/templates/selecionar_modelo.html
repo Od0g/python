@@ -8,7 +8,8 @@
 </head>
 <body>
     <div class="container">
-        <h1>Selecione um Modelo para Preencher</h1>
+        <h1>Selecionar Modelo de Checklist</h1>
+        <p>Escolha um modelo para criar um novo checklist.</p>
 
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
@@ -21,34 +22,32 @@
         {% endwith %}
 
         {% if modelos %}
-            <ul class="modelos-lista">
+            <div class="modelos-lista">
                 {% for modelo in modelos %}
-                    <li>
-                        <h3>{{ modelo.name }} (Setor: {{ modelo.sector }})</h3>
-                        <p>{{ modelo.description or 'Sem descrição.' }}</p>
-                        <a href="{{ url_for('editar_checklist', modelo_id=modelo.id) }}" class="button">Preencher</a>
-                    </li>
+                    <div class="modelo-card">
+                        <h3>{{ modelo.name }}</h3>
+                        <p>{{ modelo.description }}</p>
+                        <p><strong>Setor:</strong> {{ modelo.sector }}</p>
+                        <a href="{{ url_for('preencher_checklist', modelo_id=modelo.id) }}" class="button">Preencher</a>
+                    </div>
                 {% endfor %}
-            </ul>
+            </div>
         {% else %}
-            <p>Nenhum modelo de checklist ativo encontrado. Por favor, <a href="{{ url_for('cadastrar_modelo') }}">cadastre um novo modelo</a>.</p>
+            <p>Nenhum modelo de checklist ativo encontrado. Por favor, <a href="{{ url_for('cadastrar_modelo') }}">cadastre um novo modelo</a> primeiro.</p>
         {% endif %}
     </div>
-
     <style>
         .modelos-lista {
-            list-style: none;
-            padding: 0;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
         }
-        .modelos-lista li {
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            padding: 15px;
-            margin-bottom: 10px;
-        }
-        .modelos-lista h3 {
-            margin-top: 0;
-            color: #007bff;
+        .modelo-card {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            background-color: #f9f9f9;
         }
     </style>
 </body>

@@ -17,3 +17,12 @@ class Config:
     MAIL_USERNAME = os.environ.get('MAIL_USERNAME')
     MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD')
     ADMINS = ['seu-coordenador@exemplo.com'] # E-mail do Coordenador Padrão
+
+class TestingConfig(Config):
+    TESTING = True
+    # Usa um banco de dados SQLite em memória para os testes
+    SQLALCHEMY_DATABASE_URI = 'sqlite:///:memory:'
+    # Desativa a proteção CSRF nos formulários para facilitar os testes
+    WTF_CSRF_ENABLED = False
+    # Bcrypt com menos rounds para acelerar os testes
+    BCRYPT_LOG_ROUNDS = 4

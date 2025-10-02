@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Gerenciar Modelos de Checklist{% endblock %}
+{% block content %}
+<h2>Gerenciar Modelos de Checklist</h2>
+<div class="row">
+    <div class="col-md-4">
+        <h4>Criar Novo Modelo</h4>
+        <form method="POST">
+            {{ form.hidden_tag() }}
+            <div class="mb-2">{{ form.nome.label }} {{ form.nome(class="form-control") }}</div>
+            <div class="mb-2">{{ form.descricao.label }} {{ form.descricao(class="form-control", rows=3) }}</div>
+            {{ form.submit(class="btn btn-primary") }}
+        </form>
+    </div>
+    <div class="col-md-8">
+        <h4>Modelos Existentes</h4>
+        <div class="list-group">
+            {% for modelo in modelos %}
+            <a href="{{ url_for('editar_modelo', modelo_id=modelo.id) }}" class="list-group-item list-group-item-action">
+                <h5>{{ modelo.nome }}</h5>
+                <p class="mb-1">{{ modelo.descricao }}</p>
+                <small>{{ modelo.itens.count() }} perguntas.</small>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

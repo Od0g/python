@@ -1,23 +1,18 @@
-# app/routes.py
-from app.forms import CadastroUsuarioForm # Adicionar esta importação no topo do arquivo
-from app.email import send_email
-from flask import render_template_string
-from datetime import datetime
-import pandas as pd
-from flask import Response, render_template_string
-from weasyprint import HTML
 import os
-from werkzeug.utils import secure_filename
-from app.models import ItemTemplate, Checklist, ChecklistResposta
-from flask import render_template, flash, redirect, url_for, request
-from flask_login import current_user, login_user, logout_user, login_required
-from app import app, db
-from app.models import Usuario, Ativo
-from app.forms import LoginForm, AtivoForm
 from functools import wraps
-from flask_login import current_user
+from datetime import datetime
+from werkzeug.utils import secure_filename
 
+from flask import render_template, flash, redirect, url_for, request, Response, render_template_string
+from flask_login import current_user, login_user, logout_user, login_required
 
+from app import app, db
+# Removido import de send_email para simplificar, pode ser adicionado depois
+# from app.email import send_email 
+from app.models import Usuario, Ativo, Checklist, ChecklistResposta, TipoAtivo, ModeloChecklist, ItemModelo
+from app.forms import LoginForm, AtivoForm, CadastroUsuarioForm, ModeloChecklistForm, ItemModeloForm
+
+# --- DECORATOR DE ADMIN ---
 def admin_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -27,31 +22,19 @@ def admin_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-
-@app.route('/')
-@app.route('/index')
-@login_required
-def index():
-    # Página inicial para o operador selecionar um ativo para checagem
-    lista_ativos = Ativo.query.all()
-    return render_template('dashboard.html', lista_ativos=lista_ativos)
-
+# --- ROTAS DE AUTENTICAÇÃO ---
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
         return redirect(url_for('index'))
-    
     form = LoginForm()
     if form.validate_on_submit():
         user = Usuario.query.filter_by(matricula=form.matricula.data).first()
         if user is None or not user.check_password(form.password.data):
             flash('Matrícula ou senha inválida.', 'danger')
             return redirect(url_for('login'))
-        
         login_user(user, remember=True)
-        flash('Login realizado com sucesso!', 'success')
         return redirect(url_for('index'))
-        
     return render_template('login.html', form=form)
 
 @app.route('/logout')
@@ -59,247 +42,128 @@ def logout():
     logout_user()
     return redirect(url_for('login'))
 
-@app.route('/ativos', methods=['GET', 'POST'])
+# --- ROTAS DO OPERADOR ---
+@app.route('/')
+@app.route('/index')
 @login_required
-def ativos():
-    form = AtivoForm()
-    if form.validate_on_submit():
-        # Lógica para adicionar novo ativo
-        novo_ativo = Ativo(
-            codigo=form.codigo.data,
-            descricao=form.descricao.data,
-            setor=form.setor.data
-        )
-        db.session.add(novo_ativo)
-        db.session.commit()
-        flash('Ativo cadastrado com sucesso!', 'success')
-        return redirect(url_for('ativos'))
-        
-    # Lógica para buscar e listar os ativos existentes
-    page = request.args.get('page', 1, type=int)
-    lista_ativos = Ativo.query.order_by(Ativo.codigo).paginate(page=page, per_page=10)
-    
-    return render_template('ativos.html', form=form, lista_ativos=lista_ativos.items)
+def index():
+    lista_ativos = Ativo.query.all()
+    return render_template('dashboard.html', lista_ativos=lista_ativos)
 
-# Criar um usuário de teste se não existir
-with app.app_context():
-    if Usuario.query.filter_by(matricula='12345').first() is None:
-        u = Usuario(matricula='12345', nome='Operador Teste', perfil='operador')
-        u.set_password('123')
-        db.session.add(u)
-        db.session.commit()
-
-with app.app_context():
-    if ItemTemplate.query.count() == 0:
-        itens_padrao = ['Tela', 'Touch Screen', 'Carregador', 'Bateria', 'Leitor de Código de Barras']
-        for item_desc in itens_padrao:
-            db.session.add(ItemTemplate(descricao=item_desc))
-        db.session.commit()
-
-# Configuração para Uploads
-UPLOAD_FOLDER = 'app/static/uploads'
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-
-def allowed_file(filename):
-    return '.' in filename and \
-           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
-@app.route('/checklist/<int:ativo_id>', methods=['GET', 'POST'])
+@app.route('/selecionar-modelo/<int:ativo_id>')
 @login_required
-def checklist(ativo_id):
+def selecionar_modelo(ativo_id):
     ativo = Ativo.query.get_or_404(ativo_id)
-    itens_template = ItemTemplate.query.all()
+    if not ativo.tipo_ativo or not ativo.tipo_ativo.modelos_checklist:
+        flash('Nenhum modelo de checklist associado a este tipo de ativo.', 'warning')
+        return redirect(url_for('index'))
+    return render_template('selecionar_modelo.html', ativo=ativo, modelos=ativo.tipo_ativo.modelos_checklist)
 
+@app.route('/checklist/<int:ativo_id>/<int:modelo_id>', methods=['GET', 'POST'])
+@login_required
+def checklist(ativo_id, modelo_id):
+    ativo = Ativo.query.get_or_404(ativo_id)
+    modelo = ModeloChecklist.query.get_or_404(modelo_id)
+    
     if request.method == 'POST':
-        novo_checklist = Checklist(
-            usuario_id=current_user.id,
-            ativo_id=ativo.id,
-            turno='Manhã', # Exemplo
-            versao='1.0'   # Versão atual
-        )
+        novo_checklist = Checklist(usuario_id=current_user.id, ativo_id=ativo.id, modelo_id=modelo.id)
         db.session.add(novo_checklist)
-        db.session.commit() # Commit para obter o ID do novo_checklist
-
-        respostas_com_falha = []
-        for item in itens_template:
+        db.session.commit()
+        for item in modelo.itens:
             status = request.form.get(f'status_{item.id}')
             observacao = request.form.get(f'obs_{item.id}', '')
-            foto = request.files.get(f'foto_{item.id}')
-            foto_path = None
-
-            if foto and allowed_file(foto.filename):
-                filename = secure_filename(f"{novo_checklist.id}_{item.id}_{foto.filename}")
-                os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
-                foto_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-                foto.save(foto_path)
-
-            resposta = ChecklistResposta(
-                checklist_id=novo_checklist.id,
-                item_template_id=item.id,
-                status=status,
-                observacao=observacao,
-                foto_path=foto_path
-            )
+            resposta = ChecklistResposta(checklist_id=novo_checklist.id, item_modelo_id=item.id, status=status, observacao=observacao)
             db.session.add(resposta)
-
-            if status == 'Falha':
-                respostas_com_falha.append(resposta)
-        
         db.session.commit()
-
-        # Disparar e-mail se houver falhas
-        if respostas_com_falha:
-            send_email(
-                subject=f'[ALERTA] Falha registrada no ativo {ativo.codigo}',
-                sender=app.config['ADMINS'][0],
-                recipients=app.config['ADMINS'],
-                text_body=f"Uma falha foi registrada no ativo {ativo.codigo}. Por favor, verifique o sistema.",
-                html_body=render_template(
-                    'email/alerta_falha.html',
-                    ativo=ativo,
-                    usuario=current_user,
-                    timestamp=novo_checklist.timestamp,
-                    respostas_falha=respostas_com_falha,
-                    checklist_id=novo_checklist.id
-                )
-            )
-            flash(f'Checklist salvo. Um alerta de falha foi enviado para a gestão!', 'warning')
-        else:
-            flash(f'Checklist do ativo {ativo.codigo} salvo com sucesso!', 'success')
-            
+        flash('Checklist salvo com sucesso!', 'success')
         return redirect(url_for('index'))
-
-    return render_template('checklist.html', ativo=ativo, itens_template=itens_template)
-
-def query_checklists_filtrados(args):
-    """Função auxiliar para reutilizar a lógica de filtro."""
-    query = Checklist.query
-    
-    if args.get('data_inicio'):
-        data_inicio = datetime.strptime(args.get('data_inicio'), '%Y-%m-%d')
-        query = query.filter(Checklist.timestamp >= data_inicio)
-    
-    if args.get('data_fim'):
-        data_fim = datetime.strptime(args.get('data_fim'), '%Y-%m-%d').replace(hour=23, minute=59, second=59)
-        query = query.filter(Checklist.timestamp <= data_fim)
         
-    if args.get('ativo_id'):
-        query = query.filter(Checklist.ativo_id == args.get('ativo_id'))
-        
-    return query.order_by(Checklist.timestamp.desc()).all()
+    return render_template('checklist.html', ativo=ativo, modelo=modelo)
 
 
-@app.route('/historico')
-@login_required
-def historico():
-    checklists = query_checklists_filtrados(request.args)
-    ativos = Ativo.query.all()
-    return render_template('historico.html', checklists=checklists, ativos=ativos)
-
-
-@app.route('/checklist/ver/<int:checklist_id>')
-@login_required
-def ver_checklist(checklist_id):
-    checklist = Checklist.query.get_or_404(checklist_id)
-    return render_template('ver_checklist.html', checklist=checklist)
-
-
-@app.route('/export/excel')
-@login_required
-def export_excel():
-    checklists = query_checklists_filtrados(request.args)
-    
-    # Preparando os dados
-    data = []
-    for cl in checklists:
-        for resp in cl.respostas:
-            data.append({
-                'Checklist ID': cl.id,
-                'Data': cl.timestamp.strftime('%Y-%m-%d %H:%M'),
-                'Ativo': cl.ativo.codigo,
-                'Operador': cl.usuario.nome,
-                'Item': resp.item_template.descricao,
-                'Status': resp.status,
-                'Observação': resp.observacao
-            })
-            
-    df = pd.DataFrame(data)
-    
-    # Gerando o arquivo Excel em memória
-    output = pd.ExcelWriter('php://output') # truque para não salvar em disco
-    df.to_excel(output, index=False, sheet_name='Checklists')
-    output.close()
-    
-    return Response(
-        output.getvalue(),
-        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        headers={'Content-Disposition': 'attachment;filename=historico_checklists.xlsx'}
-    )
-
-
-@app.route('/export/pdf')
-@login_required
-def export_pdf():
-    checklists = query_checklists_filtrados(request.args)
-    
-    # Renderiza um template HTML simples para o PDF
-    # (Poderíamos criar um arquivo .html separado para isso, mas para simplificar faremos aqui)
-    html_string = render_template_string("""
-        <h1>Relatório de Checklists</h1>
-        <p>Relatório gerado em: {{ now }}</p>
-        <table border="1" style="width:100%; border-collapse: collapse;">
-            <thead>
-                <tr>
-                    <th>ID</th><th>Data</th><th>Ativo</th><th>Operador</th><th>Status</th>
-                </tr>
-            </thead>
-            <tbody>
-            {% for cl in checklists %}
-                <tr>
-                    <td>{{ cl.id }}</td>
-                    <td>{{ cl.timestamp.strftime('%d/%m/%Y %H:%M') }}</td>
-                    <td>{{ cl.ativo.codigo }}</td>
-                    <td>{{ cl.usuario.nome }}</td>
-                    <td>{{ 'Com Falhas' if cl.respostas.filter_by(status='Falha').first() else 'OK' }}</td>
-                </tr>
-            {% endfor %}
-            </tbody>
-        </table>
-    """, checklists=checklists, now=datetime.now().strftime('%d/%m/%Y %H:%M'))
-    
-    # Converte o HTML para PDF
-    pdf = HTML(string=html_string).write_pdf()
-    
-    return Response(
-        pdf,
-        mimetype='application/pdf',
-        headers={'Content-Disposition': 'attachment;filename=historico_checklists.pdf'}
-    )
-    
+# --- ROTAS DE ADMINISTRAÇÃO ---
 @app.route('/admin/usuarios', methods=['GET', 'POST'])
 @login_required
 @admin_required
 def gerenciar_usuarios():
     form = CadastroUsuarioForm()
     if form.validate_on_submit():
-        user_existe = Usuario.query.filter_by(matricula=form.matricula.data).first()
-        if user_existe:
-            flash('Matrícula já cadastrada no sistema.', 'danger')
+        if Usuario.query.filter_by(matricula=form.matricula.data).first():
+            flash('Matrícula já cadastrada.', 'danger')
         else:
-            novo_usuario = Usuario(
-                matricula=form.matricula.data,
-                nome=form.nome.data,
-                perfil=form.perfil.data
-            )
+            novo_usuario = Usuario(matricula=form.matricula.data, nome=form.nome.data, perfil=form.perfil.data)
             novo_usuario.set_password(form.password.data)
             db.session.add(novo_usuario)
             db.session.commit()
-            flash('Novo usuário cadastrado com sucesso!', 'success')
+            flash('Usuário cadastrado com sucesso!', 'success')
             return redirect(url_for('gerenciar_usuarios'))
-            
     lista_usuarios = Usuario.query.all()
     return render_template('gerenciar_usuarios.html', form=form, lista_usuarios=lista_usuarios)
 
+@app.route('/admin/ativos', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def ativos():
+    form = AtivoForm()
+    if form.validate_on_submit():
+        novo_ativo = Ativo(codigo=form.codigo.data, descricao=form.descricao.data, setor=form.setor.data, tipo_ativo=form.tipo_ativo.data)
+        db.session.add(novo_ativo)
+        db.session.commit()
+        flash('Ativo cadastrado com sucesso!', 'success')
+        return redirect(url_for('ativos'))
+    lista_ativos = Ativo.query.all()
+    return render_template('ativos.html', form=form, lista_ativos=lista_ativos)
 
+@app.route('/admin/modelos', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def gerenciar_modelos():
+    form = ModeloChecklistForm()
+    if form.validate_on_submit():
+        novo_modelo = ModeloChecklist(nome=form.nome.data, descricao=form.descricao.data)
+        db.session.add(novo_modelo)
+        db.session.commit()
+        flash('Novo modelo criado!', 'success')
+        return redirect(url_for('gerenciar_modelos'))
+    modelos = ModeloChecklist.query.all()
+    return render_template('gerenciar_modelos.html', modelos=modelos, form=form)
 
+@app.route('/admin/modelos/<int:modelo_id>', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def editar_modelo(modelo_id):
+    modelo = ModeloChecklist.query.get_or_404(modelo_id)
+    item_form = ItemModeloForm()
+    tipos_ativo = TipoAtivo.query.all()
+    if item_form.validate_on_submit():
+        novo_item = ItemModelo(pergunta=item_form.pergunta.data, modelo_id=modelo.id)
+        db.session.add(novo_item)
+        db.session.commit()
+        flash('Pergunta adicionada!', 'success')
+        return redirect(url_for('editar_modelo', modelo_id=modelo.id))
+    return render_template('editar_modelo.html', modelo=modelo, item_form=item_form, tipos_ativo=tipos_ativo)
+
+@app.route('/admin/modelos/<int:modelo_id>/associar_tipo', methods=['POST'])
+@login_required
+@admin_required
+def associar_tipo_modelo(modelo_id):
+    modelo = ModeloChecklist.query.get_or_404(modelo_id)
+    tipo_id = request.form.get('tipo_id')
+    tipo = TipoAtivo.query.get_or_404(tipo_id)
+    modelo.tipos_ativo.append(tipo)
+    db.session.commit()
+    flash(f'Modelo "{modelo.nome}" associado ao tipo "{tipo.nome}".', 'success')
+    return redirect(url_for('editar_modelo', modelo_id=modelo.id))
+
+# --- ROTAS DE HISTÓRICO E RELATÓRIOS (Simplificado) ---
+@app.route('/historico')
+@login_required
+def historico():
+    checklists = Checklist.query.order_by(Checklist.timestamp.desc()).all()
+    return render_template('historico.html', checklists=checklists, ativos=[]) # Passando lista vazia de ativos por enquanto
+
+@app.route('/checklist/ver/<int:checklist_id>')
+@login_required
+def ver_checklist(checklist_id):
+    checklist = Checklist.query.get_or_404(checklist_id)
+    return render_template('ver_checklist.html', checklist=checklist)

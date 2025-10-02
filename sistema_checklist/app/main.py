@@ -1,11 +1,13 @@
-from fastapi import FastAPI
+# app/main.py
+
+from fastapi import FastAPI, Request
+from fastapi.staticfiles import StaticFiles
+from fastapi.middleware.cors import CORSMiddleware
+
 from . import models
 from .database import engine
-from .routers import auth, sectors, equipments, checklists 
+from .routers import auth, sectors, equipments, checklists, pages, reports
 
-
-# Cria todas as tabelas no banco de dados (só na primeira vez que rodar)
-# Em um ambiente de produção, usaríamos algo como Alembic para migrações.
 models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
@@ -14,12 +16,26 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Inclui as rotas de autenticação que criamos
+origins = [
+    "http://localhost", "http://localhost:8000",
+    "http://127.0.0.1", "http://127.0.0.1:8000",
+    "*" # Permite todas as origens para ambientes como o Gitpod
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+app.mount("/static", StaticFiles(directory="app/static"), name="static")
+
+# Inclui todos os routers. A ordem aqui não importa muito.
 app.include_router(auth.router)
 app.include_router(sectors.router)
 app.include_router(equipments.router)
-app.include_router(checklists.router) #
-
-@app.get("/")
-def read_root():
-    return {"message": "Bem-vindo à API do Sistema de Checklists!"}
+app.include_router(checklists.router)
+app.include_router(reports.router)
+app.include_router(pages.router) # O router que contém a rota "/"

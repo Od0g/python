@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Editar: {{ modelo.nome }}{% endblock %}
+{% block content %}
+<h2>Editando Modelo: {{ modelo.nome }}</h2>
+<p>{{ modelo.descricao }}</p>
+<hr>
+<div class="row">
+    <div class="col-md-6">
+        <h4>Perguntas do Checklist</h4>
+        <ul>
+            {% for item in modelo.itens %}
+            <li>{{ item.pergunta }}</li>
+            {% else %}
+            <li>Nenhuma pergunta cadastrada.</li>
+            {% endfor %}
+        </ul>
+        <hr>
+        <h5>Adicionar Nova Pergunta</h5>
+        <form method="POST">
+            {{ item_form.hidden_tag() }}
+            <div class="mb-2">{{ item_form.pergunta.label }} {{ item_form.pergunta(class="form-control") }}</div>
+            {{ item_form.submit(class="btn btn-success") }}
+        </form>
+    </div>
+    <div class="col-md-6">
+        <h4>Associar a Tipos de Ativo</h4>
+        <p>Este modelo atualmente se aplica a:
+            {% for tipo in modelo.tipos_ativo %}
+                <span class="badge bg-secondary">{{ tipo.nome }}</span>
+            {% else %}
+                Nenhum.
+            {% endfor %}
+        </p>
+        <form method="POST" action="{{ url_for('associar_tipo_modelo', modelo_id=modelo.id) }}">
+            <div class="input-group">
+                <select name="tipo_id" class="form-select">
+                    {% for tipo in tipos_ativo %}
+                        {% if tipo not in modelo.tipos_ativo %}
+                            <option value="{{ tipo.id }}">{{ tipo.nome }}</option>
+                        {% endif %}
+                    {% endfor %}
+                </select>
+                <button class="btn btn-info" type="submit">Associar</button>
+            </div>
+        </form>
+    </div>
+</div>
+<a href="{{ url_for('gerenciar_modelos') }}" class="btn btn-secondary mt-4">Voltar</a>
+{% endblock %}
