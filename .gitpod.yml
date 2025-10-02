@@ -1,0 +1,26 @@
+# .gitpod.yml
+tasks:
+  - name: Instalar Google Cloud SDK e dependências
+    init: |
+      # Instala o SDK do Google Cloud
+      curl https://sdk.cloud.google.com | bash > /dev/null
+      source /home/gitpod/.bashrc
+      echo "source /home/gitpod/google-cloud-sdk/path.bash.inc" >> /home/gitpod/.bashrc
+
+      # Instala as dependências Python
+      pip install -r requirements.txt
+    command: |
+      # Sincroniza o gcloud com o ambiente atual
+      source /home/gitpod/.bashrc
+      gp sync-done gcloud
+
+  - name: Autenticar e Configurar Docker
+    command: |
+      gp sync-await gcloud # Espera o gcloud ser instalado
+      source /home/gitpod/.bashrc
+      echo "Execute 'gcloud auth login --no-launch-browser' para autenticar."
+      echo "Depois, configure o Docker com 'gcloud auth configure-docker us-central1-docker.pkg.dev'"
+
+ports:
+  - port: 8000
+    onOpen: ignore
